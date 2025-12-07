@@ -166,6 +166,40 @@ export default function AdminDashboardPage() {
 
   }, [allReconciliations]);
 
+  // Build per-user totals for admin overview
+  const userChartData = useMemo(() => {
+    if (!allReconciliations || !allUsers) return [];
+    const twelveMonthsAgo = subMonths(startOfToday(), 12);
+    const recent = allReconciliations.filter(rec => {
+      if (!rec.reconciliationDate) return false;
+      try {
+        const recDate = parse(rec.reconciliationDate, 'yyyy-MM-dd', new Date());
+        return isValid(recDate) && recDate >= twelveMonthsAgo;
+      } catch (e) {
+        return false;
+      }
+    });
+
+    const counts: Record<string, number> = {};
+    for (const r of recent) {
+      const uid = r.userId || 'unknown';
+      counts[uid] = (counts[uid] || 0) + 1;
+    }
+
+    // map to user display names
+    const rows = (allUsers || []).map(u => ({
+      user: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || u.id,
+      reconciliations: counts[u.id] || 0,
+      userId: u.id,
+    }));
+
+    // include any reconciliations with missing user
+    if (counts['unknown']) rows.push({ user: 'Unknown', reconciliations: counts['unknown'], userId: 'unknown' });
+
+    // sort descending by count
+    return rows.sort((a, b) => b.reconciliations - a.reconciliations);
+  }, [allReconciliations, allUsers]);
+
   const isLoading = isUserLoading || usersLoading || reconciliationsLoading;
   
   if (isUserLoading || (isAdmin && isLoading && !allReconciliations)) {
@@ -274,6 +308,19 @@ export default function AdminDashboardPage() {
 
         <CardContent>
           <MonthlyOverviewChart data={monthlyChartData} isLoading={isLoading} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline">User-Based Overview</CardTitle>
+          <CardDescription>
+            Reconciliations per user (last 12 months). Top users shown.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <MonthlyOverviewChart data={userChartData.slice(0, 8)} isLoading={isLoading} xKey="user" colorBy="user" />
         </CardContent>
       </Card>
     </div>

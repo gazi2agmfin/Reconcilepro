@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -29,6 +29,24 @@ export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
+  // Selected month persisted in localStorage in `yyyy-MM` format
+  const STORAGE_KEY = 'dashboard:selectedMonth';
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) || format(new Date(), 'yyyy-MM');
+    } catch (e) {
+      return format(new Date(), 'yyyy-MM');
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, selectedMonth);
+    } catch (e) {
+      // ignore
+    }
+  }, [selectedMonth]);
+
   const reconciliationsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return collection(firestore, `users/${user.uid}/reconciliations`);
@@ -49,9 +67,11 @@ export default function DashboardPage() {
       };
     }
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+    // baseDate is the month/year selected by the user
+    const [selYearStr, selMonthStr] = selectedMonth.split('-');
+    const currentYear = Number(selYearStr);
+    const currentMonth = Number(selMonthStr) - 1; // 0-indexed month
+    const now = new Date(currentYear, currentMonth, 1);
 
     let totalReconciledValue = 0;
     let reconciliationsThisMonth = 0;
@@ -59,12 +79,14 @@ export default function DashboardPage() {
     const monthlyCounts: { [key: string]: number } = {};
 
     reconciliations.forEach(rec => {
+      if (!rec.reconciliationDate) return;
       const dateParts = rec.reconciliationDate.split('-').map(Number);
       const recDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-      
+
+      // Count as 'this month' if recDate falls within selected month
       if (recDate.getFullYear() === currentYear && recDate.getMonth() === currentMonth) {
         reconciliationsThisMonth++;
-        totalReconciledValue += rec.correctedBalance;
+        totalReconciledValue += rec.correctedBalance || 0;
       }
 
       if (rec.difference !== 0) {
@@ -76,12 +98,12 @@ export default function DashboardPage() {
     });
     
     const chartData = Array.from({ length: 12 }).map((_, i) => {
-        const d = subMonths(now, i);
-        const monthKey = format(d, 'MMM yy');
-        return {
-            month: format(d, 'MMM'),
-            reconciliations: monthlyCounts[monthKey] || 0,
-        };
+      const d = subMonths(now, i);
+      const monthKey = format(d, 'MMM yy');
+      return {
+        month: format(d, 'MMM'),
+        reconciliations: monthlyCounts[monthKey] || 0,
+      };
     }).reverse();
 
 
@@ -93,7 +115,8 @@ export default function DashboardPage() {
       },
       monthlyChartData: chartData,
     };
-  }, [reconciliations]);
+  }, [reconciliations, selectedMonth]);
+  
 
   const isLoading = isUserLoading || reconciliationsLoading;
 
@@ -106,11 +129,21 @@ export default function DashboardPage() {
             Welcome back, here&apos;s your reconciliation summary.
             </p>
         </div>
-        <Button asChild>
+        <div className="flex items-center space-x-3">
+          <label className="text-sm text-muted-foreground">View month:</label>
+          <input
+            aria-label="Select month"
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="rounded-md border px-2 py-1 text-sm"
+          />
+          <Button asChild>
             <Link href="/reconciliations/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> New Reconciliation
+              <PlusCircle className="mr-2 h-4 w-4" /> New Reconciliation
             </Link>
-        </Button>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -133,7 +166,14 @@ export default function DashboardPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              In {new Date().toLocaleString('default', { month: 'long' })}
+              In {(() => {
+                try {
+                  const [y, m] = selectedMonth.split('-').map(Number);
+                  return new Date(y, m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                } catch (e) {
+                  return new Date().toLocaleString('default', { month: 'long' });
+                }
+              })()}
             </p>
           </CardContent>
         </Card>
@@ -153,7 +193,14 @@ export default function DashboardPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              In {new Date().toLocaleString('default', { month: 'long' })}
+              In {(() => {
+                try {
+                  const [y, m] = selectedMonth.split('-').map(Number);
+                  return new Date(y, m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                } catch (e) {
+                  return new Date().toLocaleString('default', { month: 'long' });
+                }
+              })()}
             </p>
           </CardContent>
         </Card>

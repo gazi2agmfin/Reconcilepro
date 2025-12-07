@@ -158,3 +158,21 @@ body {
         display: none;
     }
 }
+
+/* Hide number input spinners across modern browsers to avoid accidental changes */
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Optional: If you want to disable mouse-wheel changing for focused inputs globally */
+input[type=number]:focus {
+  outline: none;
+}
