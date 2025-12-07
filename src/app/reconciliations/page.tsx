@@ -149,7 +149,7 @@ export default function ReconciliationsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <ReconciliationsTable searchTerm={searchTerm} reconciliations={reconciliations} isLoading={isLoading} />
+                    <ReconciliationsTable searchTerm={searchTerm} reconciliations={reconciliations ?? undefined} isLoading={isLoading} showPrint={false} />
                 </CardContent>
             </Card>
         </div>

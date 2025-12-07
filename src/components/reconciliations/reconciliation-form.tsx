@@ -144,6 +144,7 @@ const SummaryCalculation = ({
   totalBookDeductions,
   correctedBookBalance,
   difference,
+  isEditMode,
 }: {
   formValues: ReconciliationFormValues;
   reportHeading?: string;
@@ -154,6 +155,7 @@ const SummaryCalculation = ({
   totalBookDeductions: number;
   correctedBookBalance: number;
   difference: number;
+  isEditMode?: boolean;
 }) => {
   const reconciliationMonth = useMemo(() => {
     if (!formValues.reconciliationDate) return '';
@@ -166,6 +168,24 @@ const SummaryCalculation = ({
     const forMonth = subMonths(utcDate, 1);
     return format(forMonth, 'MMMM yyyy');
   }, [formValues.reconciliationDate]);
+
+  // Notify header only for draft (new) reconciliations, not when editing existing ones
+  useEffect(() => {
+    if (isEditMode) {
+      try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
+      return;
+    }
+
+    try {
+      window.dispatchEvent(new CustomEvent('reconciliation:differenceDraft', { detail: difference }));
+    } catch (e) {
+      // ignore in non-browser contexts
+    }
+
+    return () => {
+      try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
+    };
+  }, [difference, isEditMode]);
 
 
   return (
@@ -351,7 +371,7 @@ export function ReconciliationForm({
   const router = useRouter();
   const { toast } = useToast();
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const printRef = useRef(null);
+  const printRef = useRef<HTMLDivElement | null>(null);
   const [isDuplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateStatementInfo, setDuplicateStatementInfo] = useState<{ statementId: number | string } | null>(null);
   const [isCopyDataDialogOpen, setCopyDataDialogOpen] = useState(false);
@@ -439,11 +459,11 @@ export function ReconciliationForm({
     correctedBookBalance,
     difference,
   } = useMemo(() => {
-    const totalBankAdditions = (formValues.additions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const totalBankDeductions = (formValues.deductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalBankAdditions = (formValues.additions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+    const totalBankDeductions = (formValues.deductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
     const correctedBankBalance = (Number(formValues.balanceAsPerBank) || 0) + totalBankAdditions - totalBankDeductions;
-    const totalBookAdditions = (formValues.bookAdditions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const totalBookDeductions = (formValues.bookDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalBookAdditions = (formValues.bookAdditions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+    const totalBookDeductions = (formValues.bookDeductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
     const correctedBookBalance = (Number(formValues.balanceAsPerBook) || 0) + totalBookAdditions - totalBookDeductions;
     const difference = correctedBankBalance - correctedBookBalance;
     return { totalBankAdditions, totalBankDeductions, correctedBankBalance, totalBookAdditions, totalBookDeductions, correctedBookBalance, difference };
@@ -879,7 +899,8 @@ export function ReconciliationForm({
                 totalBookAdditions={totalBookAdditions}
                 totalBookDeductions={totalBookDeductions}
                 correctedBookBalance={correctedBookBalance}
-                difference={difference}
+                  difference={difference}
+                  isEditMode={isEditMode}
               />
           </div>
 

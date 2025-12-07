@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import { ReconciliationForm } from '@/components/reconciliations/reconciliation-form';
@@ -23,6 +24,26 @@ export default function EditReconciliationPage() {
     }, [user, firestore, id]);
 
     const { data: reconciliation, isLoading } = useDoc(reconciliationRef);
+
+    useEffect(() => {
+        try {
+            if (id) {
+                localStorage.setItem('reconciliation:currentId', id);
+                window.dispatchEvent(new CustomEvent('reconciliation:opened', { detail: id }));
+            }
+        } catch (e) {
+            // ignore (SSR or storage blocked)
+        }
+
+        return () => {
+            try {
+                localStorage.removeItem('reconciliation:currentId');
+                window.dispatchEvent(new CustomEvent('reconciliation:closed'));
+            } catch (e) {
+                // ignore
+            }
+        };
+    }, [id]);
 
     return (
         <div className="space-y-8 max-w-5xl mx-auto print-container">

@@ -46,6 +46,12 @@ export default function DashboardPage() {
       const normalized = selectedMonth || format(new Date(), 'yyyy-MM');
       if (normalized !== selectedMonth) setSelectedMonth(normalized);
       localStorage.setItem(STORAGE_KEY, normalized);
+      try {
+        // Notify other components in this window to update their month-aware subscriptions.
+        window.dispatchEvent(new CustomEvent('dashboard:selectedMonthChanged', { detail: normalized }));
+      } catch (e) {
+        // ignore in non-browser environments
+      }
     } catch (e) {
       // ignore
     }

@@ -35,7 +35,7 @@ type Reconciliation = {
   userEmail?: string;
 };
 
-export function ReconciliationsTable({ searchTerm, reconciliations, isLoading, isAdminView }: { searchTerm?: string, reconciliations?: Reconciliation[], isLoading?: boolean, isAdminView?: boolean }) {
+export function ReconciliationsTable({ searchTerm, reconciliations, isLoading, isAdminView, showPrint = true }: { searchTerm?: string, reconciliations?: Reconciliation[], isLoading?: boolean, isAdminView?: boolean, showPrint?: boolean }) {
   const firestore = useFirestore();
 
   const filteredReconciliations = useMemo(() => {
@@ -120,9 +120,9 @@ export function ReconciliationsTable({ searchTerm, reconciliations, isLoading, i
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild><Link href={`/reconciliations/${rec.id}/edit`}>Edit</Link></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handlePrint(rec)}>Print</DropdownMenuItem>
+                  {showPrint && <DropdownMenuItem onClick={() => handlePrint(rec)}>Print</DropdownMenuItem>}
                   <DropdownMenuItem onClick={() => handleDelete(rec)} className="text-destructive focus:text-destructive focus:bg-destructive/10">Delete</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

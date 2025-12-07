@@ -257,6 +257,7 @@ export default function AdminReconciliationsPage() {
                         reconciliations={filteredData} 
                         isLoading={isLoading}
                         isAdminView={true}
+                        showPrint={false}
                     />
                 </CardContent>
             </Card>

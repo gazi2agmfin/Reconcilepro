@@ -125,20 +125,38 @@ const DynamicItemList = ({
   );
 };
 
-const SummaryCalculation = ({ control, reportHeading }: { control: any, reportHeading?: string }) => {
+const SummaryCalculation = ({ control, reportHeading, isEditMode }: { control: any, reportHeading?: string, isEditMode?: boolean }) => {
   const formValues = useWatch({ control });
 
   // Bank side calculations
-  const totalBankAdditions = useMemo(() => (formValues.additions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0), [formValues.additions]);
-  const totalBankDeductions = useMemo(() => (formValues.deductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0), [formValues.deductions]);
+  const totalBankAdditions = useMemo(() => (formValues.additions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.additions]);
+  const totalBankDeductions = useMemo(() => (formValues.deductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.deductions]);
   const correctedBankBalance = useMemo(() => (Number(formValues.balanceAsPerBank) || 0) + totalBankAdditions - totalBankDeductions, [formValues.balanceAsPerBank, totalBankAdditions, totalBankDeductions]);
 
   // Book side calculations
-  const totalBookAdditions = useMemo(() => (formValues.bookAdditions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0), [formValues.bookAdditions]);
-  const totalBookDeductions = useMemo(() => (formValues.bookDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0), [formValues.bookDeductions]);
+  const totalBookAdditions = useMemo(() => (formValues.bookAdditions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.bookAdditions]);
+  const totalBookDeductions = useMemo(() => (formValues.bookDeductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.bookDeductions]);
   const correctedBookBalance = useMemo(() => (Number(formValues.balanceAsPerBook) || 0) + totalBookAdditions - totalBookDeductions, [formValues.balanceAsPerBook, totalBookAdditions, totalBookDeductions]);
 
   const difference = useMemo(() => correctedBankBalance - correctedBookBalance, [correctedBankBalance, correctedBookBalance]);
+
+  useEffect(() => {
+    // Only notify header for draft (new) reconciliations, not when editing existing ones
+    if (isEditMode) {
+      try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
+      return;
+    }
+
+    try {
+      window.dispatchEvent(new CustomEvent('reconciliation:differenceDraft', { detail: difference }));
+    } catch (e) {
+      // ignore in non-browser contexts
+    }
+
+    return () => {
+      try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
+    };
+  }, [difference, isEditMode]);
 
 
   return (
@@ -319,7 +337,7 @@ export function ReconciliationForm({
   const router = useRouter();
   const { toast } = useToast();
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const printRef = useRef(null);
+  const printRef = useRef<HTMLDivElement | null>(null);
   
   const firestore = useFirestore();
   const { user } = useUser();
@@ -623,7 +641,7 @@ export function ReconciliationForm({
         </div>
 
         <div ref={printRef}>
-            <SummaryCalculation control={control} reportHeading={settingsData?.reportHeading} />
+            <SummaryCalculation control={control} reportHeading={settingsData?.reportHeading} isEditMode={isEditMode} />
         </div>
 
 

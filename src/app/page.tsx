@@ -21,9 +21,10 @@ export default function LoginPage() {
       <AuthCard>
         <LoginForm />
       </AuthCard>
-      <p className="text-center text-sm text-muted-foreground mt-8 max-w-sm">
-       A streamlined bank reconciliation tool.
-      </p>
+         <p className="text-center text-sm text-muted-foreground mt-8 max-w-sm">
+  A streamlined bank reconciliation tool.<br />
+  Developed by: <span className="text-blue-500">Ariful Islam</span>, <span className="text-green-500">AGM Finance</span>
+</p>
     </main>
   );
 }
