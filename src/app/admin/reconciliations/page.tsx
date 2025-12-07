@@ -184,7 +184,17 @@ export default function AdminReconciliationsPage() {
             });
             worksheet['!cols'] = colWidths;
     
-            XLSX.writeFile(workbook, "all-reconciliations.xlsx");
+            // Choose a helpful filename: include bank code and reconciliation month when possible
+            const bankCodes = Array.from(new Set(dataToExport.map(r => r.bankCode).filter(Boolean)));
+            const months = Array.from(new Set(dataToExport.map(r => r.reconciliationMonth).filter(Boolean)));
+
+            const safe = (s: string) => s.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_.]/g, '').toLowerCase();
+
+            const bankPart = bankCodes.length === 1 ? safe(bankCodes[0]) : (bankCodes.length === 0 ? 'all-banks' : 'multiple-banks');
+            const monthPart = months.length === 1 ? safe(months[0]) : (months.length === 0 ? 'all-months' : `${safe(months[0])}_to_${safe(months[months.length-1])}`);
+            const filename = `${bankPart}_${monthPart}.xlsx`;
+
+            XLSX.writeFile(workbook, filename);
     
         } catch (error) {
             console.error("Failed to generate Excel file:", error);
