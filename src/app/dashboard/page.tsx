@@ -234,7 +234,7 @@ export default function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MonthlyOverviewChart data={monthlyChartData} isLoading={isLoading} />
+          <MonthlyOverviewChart data={monthlyChartData} isLoading={isLoading} colorBy="month" />
         </CardContent>
       </Card>
     </div>

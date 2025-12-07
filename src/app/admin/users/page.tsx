@@ -81,6 +81,10 @@ export default function AdminUsersPage() {
     const [selectedUserForPassword, setSelectedUserForPassword] = useState<UserProfile | null>(null);
     const [newTemporaryPassword, setNewTemporaryPassword] = useState('');
     const [isExporting, setIsExporting] = useState(false);
+    const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+    const [deletingUserEmail, setDeletingUserEmail] = useState<string | null>(null);
+    const [deleteError, setDeleteError] = useState<any>(null);
+    const [isDeleteErrorDialogOpen, setDeleteErrorDialogOpen] = useState(false);
 
 
     const fetchCounts = useCallback(async () => {
@@ -207,23 +211,39 @@ export default function AdminUsersPage() {
     };
 
     const handleDeleteUser = async (userId: string, userEmail: string) => {
+        setDeletingUserId(userId);
+        setDeletingUserEmail(userEmail);
+        setDeleteError(null);
         toast({ title: 'Deleting User...', description: `Removing ${userEmail}. Please wait.` });
         try {
-            const result = await handleDeleteUserAction(userId);
-            if (result.success) {
-                toast({
-                    title: "User Deleted",
-                    description: `${userEmail} has been permanently removed.`,
-                });
-            } else {
-                throw new Error(result.message);
-            }
+                    // Use API route instead of Server Action to avoid invalid Server Actions request
+                    const resp = await fetch('/api/admin/delete-user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId }),
+                    });
+                    const result = await resp.json();
+                    if (resp.ok && result.success) {
+                        toast({
+                            title: "User Deleted",
+                            description: `${userEmail} has been permanently removed.`,
+                        });
+                        // clear any deleting state
+                        setDeletingUserId(null);
+                        setDeletingUserEmail(null);
+                    } else {
+                        const msg = result?.message || `Failed to delete user (status ${resp.status})`;
+                        throw new Error(msg);
+                    }
         } catch (error: any) {
             console.error("User Deletion Error:", error);
+            // store error and present a dialog with more context and retry option
+            setDeleteError(error);
+            setDeleteErrorDialogOpen(true);
             toast({
                 variant: "destructive",
                 title: "Deletion Failed",
-                description: error.message || "Could not delete the user.",
+                description: error?.message || "Could not delete the user.",
             });
         }
     };
@@ -512,6 +532,57 @@ export default function AdminUsersPage() {
                 <DialogFooter>
                     <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
                     {!newTemporaryPassword && <Button onClick={handleSetPassword}>Generate Password</Button>}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        {/* Delete Error Dialog: shows detailed error and allows retry/copy */}
+        <Dialog open={isDeleteErrorDialogOpen} onOpenChange={setDeleteErrorDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Could not delete user</DialogTitle>
+                    <DialogDescription>
+                        We were unable to delete <span className="font-bold">{deletingUserEmail}</span>. You can retry or copy the error details to share with support.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-2">
+                    <pre className="max-h-48 overflow-auto rounded bg-muted p-2 text-xs">{deleteError?.message || String(deleteError) || 'Unknown error'}</pre>
+                    {deleteError?.stack && (
+                        <details className="mt-2 text-xs text-muted-foreground">
+                            <summary>View stack trace</summary>
+                            <pre className="whitespace-pre-wrap mt-2">{deleteError.stack}</pre>
+                        </details>
+                    )}
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Close</Button>
+                    </DialogClose>
+                    <Button
+                        onClick={() => {
+                            // retry delete
+                            setDeleteError(null);
+                            setDeleteErrorDialogOpen(false);
+                            if (deletingUserId && deletingUserEmail) {
+                                handleDeleteUser(deletingUserId, deletingUserEmail);
+                            }
+                        }}
+                    >
+                        Retry
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            const details = deleteError?.stack || deleteError?.message || String(deleteError) || '';
+                            try {
+                                navigator.clipboard.writeText(details);
+                                toast({ title: 'Copied', description: 'Error details copied to clipboard.' });
+                            } catch (e) {
+                                console.warn('Clipboard copy failed', e);
+                            }
+                        }}
+                    >
+                        Copy Details
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
