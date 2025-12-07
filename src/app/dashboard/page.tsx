@@ -41,7 +41,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, selectedMonth);
+      // Persist a normalized month value: if the input was cleared (empty string),
+      // fall back to the current month so downstream logic never sees an empty value.
+      const normalized = selectedMonth || format(new Date(), 'yyyy-MM');
+      if (normalized !== selectedMonth) setSelectedMonth(normalized);
+      localStorage.setItem(STORAGE_KEY, normalized);
     } catch (e) {
       // ignore
     }
@@ -68,7 +72,9 @@ export default function DashboardPage() {
     }
 
     // baseDate is the month/year selected by the user
-    const [selYearStr, selMonthStr] = selectedMonth.split('-');
+    // If the selector is empty, normalize to the current month so parsing is safe.
+    const normalizedSelected = selectedMonth || format(new Date(), 'yyyy-MM');
+    const [selYearStr, selMonthStr] = normalizedSelected.split('-');
     const currentYear = Number(selYearStr);
     const currentMonth = Number(selMonthStr) - 1; // 0-indexed month
     const now = new Date(currentYear, currentMonth, 1);
@@ -135,7 +141,12 @@ export default function DashboardPage() {
             aria-label="Select month"
             type="month"
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
+            onChange={(e) => {
+              // If the user clears the input, e.target.value will be an empty string.
+              // Normalize that immediately to the current month to avoid downstream errors.
+              const val = e.target.value || format(new Date(), 'yyyy-MM');
+              setSelectedMonth(val);
+            }}
             className="rounded-md border px-2 py-1 text-sm"
           />
           <Button asChild>
