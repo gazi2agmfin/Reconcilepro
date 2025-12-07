@@ -1,0 +1,57 @@
+// Best-practice Firestore Security Rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'admin@example.com';
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    //--------------------------------------------
+    // 1) Admin must access ALL reconciliations
+    //--------------------------------------------
+    match /users/{userId}/reconciliations/{reconciliationId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow write, delete: if isOwner(userId) || isAdmin();
+    }
+
+    //--------------------------------------------
+    // 2) Allow admin to run collectionGroup("reconciliations")
+    //--------------------------------------------
+    match /{path=**}/reconciliations/{reconciliationId} {
+      allow read, list: if isAdmin();
+    }
+
+    //--------------------------------------------
+    // 3) User profiles
+    //--------------------------------------------
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    //--------------------------------------------
+    // 4) Banks
+    //--------------------------------------------
+    match /banks/{bankId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    //--------------------------------------------
+    // 5) Settings
+    //--------------------------------------------
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

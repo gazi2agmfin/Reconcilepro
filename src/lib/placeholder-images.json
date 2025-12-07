@@ -1,0 +1,10 @@
+{
+  "placeholderImages": [
+    {
+      "id": "user-avatar-1",
+      "description": "A user's avatar",
+      "imageUrl": "",
+      "imageHint": "person face"
+    }
+  ]
+}

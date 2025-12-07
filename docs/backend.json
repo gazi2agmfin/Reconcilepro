@@ -1,0 +1,254 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "URL of the user's avatar image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "Bank": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Bank",
+      "type": "object",
+      "description": "Represents a bank.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the bank."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the bank."
+        },
+        "code": {
+          "type": "string",
+          "description": "Code of the bank."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "code"
+      ]
+    },
+    "Reconciliation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reconciliation",
+      "type": "object",
+      "description": "Represents a bank reconciliation statement.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the reconciliation statement."
+        },
+        "statementId": {
+          "type": "number",
+          "description": "Sequential, user-facing identifier for the statement."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Reconciliation)"
+        },
+        "bankId": {
+          "type": "string",
+          "description": "Reference to Bank. (Relationship: Bank 1:N Reconciliation)"
+        },
+        "reconciliationDate": {
+          "type": "string",
+          "description": "Date of the reconciliation.",
+          "format": "date-time"
+        },
+        "reconciliationMonth": {
+          "type": "string",
+          "description": "Month of the reconciliation."
+        },
+        "balanceAsPerBank": {
+          "type": "number",
+          "description": "Balance as per bank statement."
+        },
+        "balanceAsPerBook": {
+          "type": "number",
+          "description": "Balance as per book."
+        },
+        "totalAdditions": {
+          "type": "number",
+          "description": "Total additions to the balance."
+        },
+        "totalDeductions": {
+          "type": "number",
+          "description": "Total deductions from the balance."
+        },
+        "correctedBalance": {
+          "type": "number",
+          "description": "Corrected balance after reconciliation."
+        },
+        "difference": {
+          "type": "number",
+          "description": "Difference between the bank and book balances after reconciliation."
+        }
+      },
+      "required": [
+        "id",
+        "statementId",
+        "userId",
+        "bankId",
+        "reconciliationDate",
+        "reconciliationMonth",
+        "balanceAsPerBank",
+        "balanceAsPerBook",
+        "totalAdditions",
+        "totalDeductions",
+        "correctedBalance",
+        "difference"
+      ]
+    },
+    "FieldNarration": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FieldNarration",
+      "type": "object",
+      "description": "Represents a user's textual narration for a specific field in a reconciliation statement.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the field narration."
+        },
+        "reconciliationId": {
+          "type": "string",
+          "description": "Reference to Reconciliation. (Relationship: Reconciliation 1:N FieldNarration)"
+        },
+        "fieldName": {
+          "type": "string",
+          "description": "Name of the field the narration is for."
+        },
+        "narration": {
+          "type": "string",
+          "description": "Textual narration provided by the user."
+        }
+      },
+      "required": [
+        "id",
+        "reconciliationId",
+        "fieldName",
+        "narration"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. User can only access his profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/banks/{bankId}",
+        "definition": {
+          "entityName": "Bank",
+          "schema": {
+            "$ref": "#/backend/entities/Bank"
+          },
+          "description": "Stores bank information. Accessible to all users.",
+          "params": [
+            {
+              "name": "bankId",
+              "description": "The unique identifier for the bank."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/reconciliations/{reconciliationId}",
+        "definition": {
+          "entityName": "Reconciliation",
+          "schema": {
+            "$ref": "#/backend/entities/Reconciliation"
+          },
+          "description": "Stores reconciliation statements, owned by users. The userId is used for path-based ownership. Includes bankId for bank linking.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "reconciliationId",
+              "description": "The unique identifier for the reconciliation statement."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/reconciliations/{reconciliationId}/fieldNarrations/{fieldNarrationId}",
+        "definition": {
+          "entityName": "FieldNarration",
+          "schema": {
+            "$ref": "#/backend/entities/FieldNarration"
+          },
+          "description": "Stores user narrations for specific fields within a reconciliation. Nested under the reconciliation document to maintain context and ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "reconciliationId",
+              "description": "The unique identifier for the reconciliation statement."
+            },
+            {
+              "name": "fieldNarrationId",
+              "description": "The unique identifier for the field narration."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, support the required QAPs, and maintain data integrity. The structure leverages path-based ownership for user-specific data and denormalization to avoid `get()` calls in security rules.\n\n*   **Users Collection:** Stores user profiles.\n*   **Banks Collection:** Stores bank information.\n*   **Reconciliations Collection:** Stores reconciliation statements, owned by users and linked to banks. The `userId` is used for path-based ownership and simple security rules, also `bankId` is stored for tracing to the bank.\n*   **Field Narrations Collection:** Stores user narrations for specific fields within a reconciliation. This is nested under the reconciliation document to maintain context and ownership.\n\n**Authorization Independence:** The primary strategy for achieving authorization independence is path-based ownership. Each reconciliation statement is stored under `/users/{userId}/reconciliations/{reconciliationId}`, ensuring that only the user with the matching `userId` has access to that data. The FieldNarration subcollection further reinforces this by nesting under the reconciliation. This eliminates the need for `get()` calls in security rules to verify ownership. This is crucial for maintaining atomicity in transactions and batches.\n\n**QAPs Support:**\n*   The structure inherently supports secure `list` operations (QAPs) because of the path-based ownership. Rules can easily restrict listing reconciliations to only those owned by the authenticated user.\n*   The segregation of reconciliations by user (`/users/{userId}/reconciliations/{reconciliationId}`) ensures that users can only access their own data. The FieldNarration subcollection inherits this security posture.\n\n**Data Integrity:** Timestamps are enforced by Firestore's server timestamp functionality within the security rules, ensuring that create and update times are accurate and reliable. Path-based ownership enforces data integrity by restricting access to only the owner (user) of the document, reducing the risk of unauthorized modification or deletion."
+  }
+}
+    
