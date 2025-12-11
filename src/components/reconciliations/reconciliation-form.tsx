@@ -169,13 +169,10 @@ const SummaryCalculation = ({
     return format(forMonth, 'MMMM yyyy');
   }, [formValues.reconciliationDate]);
 
-  // Notify header only for draft (new) reconciliations, not when editing existing ones
+  // Dispatch live draft updates so the header can reflect unsaved changes.
+  // Previously this only broadcast for new (non-edit) drafts. Change makes
+  // the header show live difference while editing an existing reconciliation.
   useEffect(() => {
-    if (isEditMode) {
-      try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
-      return;
-    }
-
     try {
       window.dispatchEvent(new CustomEvent('reconciliation:differenceDraft', { detail: difference }));
     } catch (e) {
@@ -185,7 +182,7 @@ const SummaryCalculation = ({
     return () => {
       try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
     };
-  }, [difference, isEditMode]);
+  }, [difference]);
 
 
   return (
