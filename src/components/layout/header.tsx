@@ -215,28 +215,25 @@ export function SiteHeader() {
           </div>
           <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" className="rounded-full">
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    <span className="sr-only">Toggle notifications</span>
-                    {
-                      // Prefer live draft difference when present (user is creating a new reconciliation).
-                      // Otherwise fall back to the latest saved reconciliation difference from Firestore.
-                      (() => {
-                        const displayed = draftDifference !== null ? draftDifference : latestDifference;
-                        const isLoading = draftDifference === null ? differencesLoading : false;
-                        if (displayed === null) return null;
-                        const formatted = isLoading ? '…' : (displayed >= 0 ? '+' : '-') + Math.abs(displayed).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        return (
-                          <span className="ml-1" title={isLoading ? 'Difference: …' : `Difference: ${formatted}`}>
-                            <Badge variant={displayed === 0 ? 'default' : 'destructive'}>
-                              {formatted}
-                            </Badge>
-                          </span>
-                        );
-                      })()
-                    }
-                  </div>
+                  <Bell className="h-5 w-5" />
+                  <span className="sr-only">Toggle notifications</span>
               </Button>
+              {
+                // Render the badge to the right of the bell button so it doesn't shift the icon.
+                (() => {
+                  const displayed = draftDifference !== null ? draftDifference : latestDifference;
+                  const isLoading = draftDifference === null ? differencesLoading : false;
+                  if (displayed === null) return null;
+                  const formatted = isLoading ? '…' : (displayed >= 0 ? '+' : '-') + Math.abs(displayed).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return (
+                    <span className="ml-2" title={isLoading ? 'Difference: …' : `Difference: ${formatted}`}>
+                      <Badge variant={displayed === 0 ? 'default' : 'destructive'}>
+                        {formatted}
+                      </Badge>
+                    </span>
+                  );
+                })()
+              }
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="rounded-full">
