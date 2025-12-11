@@ -72,7 +72,8 @@ export function MonthlyOverviewChart({ data, isLoading, xKey = 'month', valueKey
           {valueKeys ? (
             valueKeys.map((key, idx) => (
               <Bar key={key} dataKey={key} stackId={stacked ? 'stack' : undefined} fill={getColorFor(key)} radius={stacked ? (idx === 0 ? [0, 0, 0, 0] : idx === valueKeys.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]) : [4, 4, 0, 0]}>
-                {showLabels && idx === valueKeys.length - 1 && <LabelList dataKey={key} position="top" />}
+                {stacked && <LabelList dataKey={key} position="center" fill="white" fontSize={10} formatter={(value) => `${key}: ${value}`} />}
+                {showLabels && idx === valueKeys.length - 1 && <LabelList dataKey="total" position="top" />}
               </Bar>
             ))
           ) : (

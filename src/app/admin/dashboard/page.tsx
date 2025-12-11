@@ -117,6 +117,15 @@ export default function AdminDashboardPage() {
       };
     }
 
+    // Create user map: id -> display name
+    const userMap: Record<string, string> = {};
+    if (allUsers) {
+      allUsers.forEach(u => {
+        userMap[u.id] = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || u.id;
+      });
+    }
+    userMap['unknown'] = 'Unknown';
+
     // Client-side filtering for the last 12 months
     const twelveMonthsAgo = subMonths(startOfToday(), 12);
     const recentReconciliations = allReconciliations.filter(rec => {
@@ -163,14 +172,23 @@ export default function AdminDashboardPage() {
       };
     }).reverse();
 
-    // Build stacked data: {month: 'Jan', user1: 5, user2: 3, ...}
+    // Build stacked data: {month: 'Jan', 'User1': 5, 'User2': 3, total: 8, ...}
     const stackedChartData = Array.from({ length: 12 }).map((_, i) => {
       const dt = subMonths(new Date(), i);
       const key = format(dt, 'MMM yy');
       const obj: any = { month: format(dt, 'MMM') };
       if (perMonthUserCounts[key]) {
-        Object.assign(obj, perMonthUserCounts[key]);
+        Object.keys(perMonthUserCounts[key]).forEach(uid => {
+          const name = userMap[uid] || uid;
+          obj[name] = perMonthUserCounts[key][uid];
+        });
       }
+      // Calculate total
+      const total = Object.keys(obj).reduce((sum, k) => {
+        if (k !== 'month' && typeof obj[k] === 'number') sum += obj[k];
+        return sum;
+      }, 0);
+      obj.total = total;
       return obj;
     }).reverse();
 
@@ -187,7 +205,7 @@ export default function AdminDashboardPage() {
 
   }, [allReconciliations]);
 
-  // Get unique user IDs for stacked chart
+  // Get unique user names for stacked chart
   const valueKeys = useMemo(() => {
     if (!stackedChartData || !allUsers) return [];
     const userSet = new Set<string>();
@@ -196,8 +214,8 @@ export default function AdminDashboardPage() {
         if (key !== 'month') userSet.add(key);
       });
     });
-    // Sort by total count descending, but for simplicity, just return as is
-    return Array.from(userSet);
+    // Sort alphabetically for consistency
+    return Array.from(userSet).sort();
   }, [stackedChartData, allUsers]);
   const userChartData = useMemo(() => {
     if (!allReconciliations || !allUsers) return [];
@@ -347,7 +365,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="font-headline">Stacked User Overview</CardTitle>
           <CardDescription>
-            Reconciliations per month stacked by user (last 12 months).
+            Reconciliations per month stacked by user (last 12 months). Hover to see user details.
           </CardDescription>
         </CardHeader>
 
