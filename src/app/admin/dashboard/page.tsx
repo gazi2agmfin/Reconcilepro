@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
   }, [allUsers, firestore, isAdmin, usersLoading]);
 
 
-  const { dashboardStats, monthlyChartData } = useMemo(() => {
+  const { dashboardStats, monthlyChartData, stackedChartData } = useMemo(() => {
     if (!allReconciliations) {
       return {
         dashboardStats: {
@@ -109,6 +109,10 @@ export default function AdminDashboardPage() {
         monthlyChartData: Array.from({ length: 12 }).map((_, i) => {
             const dt = subMonths(new Date(), i);
             return { month: format(dt, 'MMM'), reconciliations: 0 };
+        }).reverse(),
+        stackedChartData: Array.from({ length: 12 }).map((_, i) => {
+            const dt = subMonths(new Date(), i);
+            return { month: format(dt, 'MMM') };
         }).reverse(),
       };
     }
@@ -128,6 +132,7 @@ export default function AdminDashboardPage() {
     let totalReconciledValue = 0;
     let statementsWithDifferences = 0;
     const monthlyCounts: Record<string, number> = {};
+    const perMonthUserCounts: Record<string, Record<string, number>> = {};
 
     for (const rec of recentReconciliations) {
       totalReconciledValue += rec.correctedBalance || 0;
@@ -141,6 +146,10 @@ export default function AdminDashboardPage() {
         if (isValid(dateObj)) {
           const key = format(dateObj, 'MMM yy');
           monthlyCounts[key] = (monthlyCounts[key] || 0) + 1;
+
+          const uid = rec.userId || 'unknown';
+          perMonthUserCounts[key] = perMonthUserCounts[key] || {};
+          perMonthUserCounts[key][uid] = (perMonthUserCounts[key][uid] || 0) + 1;
         }
       }
     }
@@ -154,6 +163,17 @@ export default function AdminDashboardPage() {
       };
     }).reverse();
 
+    // Build stacked data: {month: 'Jan', user1: 5, user2: 3, ...}
+    const stackedChartData = Array.from({ length: 12 }).map((_, i) => {
+      const dt = subMonths(new Date(), i);
+      const key = format(dt, 'MMM yy');
+      const obj: any = { month: format(dt, 'MMM') };
+      if (perMonthUserCounts[key]) {
+        Object.assign(obj, perMonthUserCounts[key]);
+      }
+      return obj;
+    }).reverse();
+
 
     return {
       dashboardStats: {
@@ -162,11 +182,23 @@ export default function AdminDashboardPage() {
         statementsWithDifferences,
       },
       monthlyChartData: chartData,
+      stackedChartData,
     };
 
   }, [allReconciliations]);
 
-  // Build per-user totals for admin overview
+  // Get unique user IDs for stacked chart
+  const valueKeys = useMemo(() => {
+    if (!stackedChartData || !allUsers) return [];
+    const userSet = new Set<string>();
+    stackedChartData.forEach(monthData => {
+      Object.keys(monthData).forEach(key => {
+        if (key !== 'month') userSet.add(key);
+      });
+    });
+    // Sort by total count descending, but for simplicity, just return as is
+    return Array.from(userSet);
+  }, [stackedChartData, allUsers]);
   const userChartData = useMemo(() => {
     if (!allReconciliations || !allUsers) return [];
     const twelveMonthsAgo = subMonths(startOfToday(), 12);
@@ -308,6 +340,19 @@ export default function AdminDashboardPage() {
 
         <CardContent>
           <MonthlyOverviewChart data={monthlyChartData} isLoading={isLoading} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline">Stacked User Overview</CardTitle>
+          <CardDescription>
+            Reconciliations per month stacked by user (last 12 months).
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <MonthlyOverviewChart data={stackedChartData} isLoading={isLoading} xKey="month" valueKeys={valueKeys} stacked={true} />
         </CardContent>
       </Card>
 

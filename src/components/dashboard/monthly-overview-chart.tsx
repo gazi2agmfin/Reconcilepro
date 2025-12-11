@@ -27,9 +27,11 @@ type Props = {
   colorBy?: 'index' | 'month' | 'user' | string; // the field name to color by, or 'index'
   colorMap?: Record<string,string>;
   showLabels?: boolean;
+  stacked?: boolean; // whether to stack multiple value keys
+  valueKeys?: string[]; // multiple value keys for stacked/grouped bars
 }
 
-export function MonthlyOverviewChart({ data, isLoading, xKey = 'month', valueKey = 'reconciliations', colorBy = 'index', colorMap, showLabels = true }: Props) {
+export function MonthlyOverviewChart({ data, isLoading, xKey = 'month', valueKey = 'reconciliations', colorBy = 'index', colorMap, showLabels = true, stacked = false, valueKeys }: Props) {
   if (isLoading) {
     return (
         <div className="h-[350px] w-full pr-4">
@@ -38,14 +40,9 @@ export function MonthlyOverviewChart({ data, isLoading, xKey = 'month', valueKey
     )
   }
 
-  const getColorFor = (entry: ChartData, index: number) => {
-    let key = '';
-    if (colorBy === 'index') key = String(index);
-    else if (typeof colorBy === 'string' && entry && entry[colorBy]) key = String(entry[colorBy]);
-    else if (entry && entry[xKey]) key = String(entry[xKey]);
-
-    if (colorMap && key && colorMap[key]) return colorMap[key];
-    const hue = hashStringToHue(key || String(index));
+  const getColorFor = (key: string) => {
+    if (colorMap && colorMap[key]) return colorMap[key];
+    const hue = hashStringToHue(key);
     return `hsl(${hue} 70% 45%)`;
   }
 
@@ -72,12 +69,24 @@ export function MonthlyOverviewChart({ data, isLoading, xKey = 'month', valueKey
             cursor={{ fill: 'hsl(var(--accent) / 0.2)' }} 
             content={<ChartTooltipContent indicator="dot" />} 
           />
-          <Bar dataKey={valueKey} radius={[4, 4, 0, 0]}>
-            {data.map((entry, i) => (
-              <Cell key={`cell-${i}`} fill={getColorFor(entry, i)} />
-            ))}
-            {showLabels && <LabelList dataKey={valueKey} position="top" />}
-          </Bar>
+          {valueKeys ? (
+            valueKeys.map((key, idx) => (
+              <Bar key={key} dataKey={key} stackId={stacked ? 'stack' : undefined} fill={getColorFor(key)} radius={stacked ? (idx === 0 ? [0, 0, 0, 0] : idx === valueKeys.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]) : [4, 4, 0, 0]}>
+                {showLabels && idx === valueKeys.length - 1 && <LabelList dataKey={key} position="top" />}
+              </Bar>
+            ))
+          ) : (
+            <Bar dataKey={valueKey} radius={[4, 4, 0, 0]}>
+              {data.map((entry, i) => {
+                let key = '';
+                if (colorBy === 'index') key = String(i);
+                else if (typeof colorBy === 'string' && entry && entry[colorBy]) key = String(entry[colorBy]);
+                else if (entry && entry[xKey]) key = String(entry[xKey]);
+                return <Cell key={`cell-${i}`} fill={getColorFor(key)} />;
+              })}
+              {showLabels && <LabelList dataKey={valueKey} position="top" />}
+            </Bar>
+          )}
         </BarChart>
       </ChartContainer>
     </div>
