@@ -213,7 +213,7 @@ const SummaryCalculation = ({
         
         <div>
             <div className="flex justify-between items-end border-b-2 border-black pb-1">
-                <h4 className="font-bold">Balance as per Bank end of the period</h4>
+                <h4 className="font-bold">Bank Balance end of the period</h4>
                 <span className="font-bold w-48 text-right">
                     {Number(formValues.balanceAsPerBank || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
@@ -272,7 +272,7 @@ const SummaryCalculation = ({
 
         <div>
              <div className="flex justify-between items-end border-b-2 border-black pb-1">
-                <h4 className="font-bold">Balance as per Book end of the period</h4>
+                <h4 className="font-bold">Ledger Balance end of the period</h4>
                 <span className="font-bold w-48 text-right">
                     {Number(formValues.balanceAsPerBook || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
