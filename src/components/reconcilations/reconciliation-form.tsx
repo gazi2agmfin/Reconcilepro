@@ -236,7 +236,7 @@ const SummaryCalculation = ({ control, reportHeading, isEditMode }: { control: a
              </div>
 
              <div className="flex justify-between items-center border-t-4 border-double border-black pt-2 mt-2">
-                <h4 className="font-bold">Corrected Balance end of the period</h4>
+                <h4 className="font-bold">Corrected Bank Balance end of the period</h4>
                 <span className="w-40 text-right font-bold">{correctedBankBalance.toFixed(2)}</span>
             </div>
         </div>
@@ -292,7 +292,7 @@ const SummaryCalculation = ({ control, reportHeading, isEditMode }: { control: a
              </div>
 
              <div className="flex justify-between items-center border-t-2 border-black pt-2 mt-2">
-                <h4 className="font-bold">Corrected Balance end of the period</h4>
+                <h4 className="font-bold">Corrected Book Balance end of the period</h4>
                 <span className="w-40 text-right font-bold">{correctedBookBalance.toFixed(2)}</span>
             </div>
         </div>
