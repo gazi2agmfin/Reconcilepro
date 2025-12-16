@@ -188,7 +188,7 @@ const SummaryCalculation = ({ control, reportHeading, isEditMode }: { control: a
         {/* --- Bank Section --- */}
         <div className="space-y-2 pt-4">
             <div className="flex justify-between items-center border-b-2 border-black pb-1">
-                <h4 className="font-bold">Balance as per Bank end of the period</h4>
+                <h4 className="font-bold">Bank Balance end of the period</h4>
                 <FormField
                     control={control}
                     name="balanceAsPerBank"
@@ -244,7 +244,7 @@ const SummaryCalculation = ({ control, reportHeading, isEditMode }: { control: a
         {/* --- Book Section --- */}
         <div className="space-y-2 pt-4">
              <div className="flex justify-between items-center border-b-2 border-black pb-1">
-                <h4 className="font-bold">Balance as per Book end of the period</h4>
+                <h4 className="font-bold"> Book Balance end of the period</h4>
                  <FormField
                     control={control}
                     name="balanceAsPerBook"
