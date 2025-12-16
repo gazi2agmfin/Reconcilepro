@@ -262,7 +262,7 @@ const SummaryCalculation = ({
              
              <div className="pt-2 mt-2">
                 <div className="flex justify-between items-center">
-                    <h4 className="font-bold">Corrected Balance end of the period</h4>
+                    <h4 className="font-bold">Corrected Bank Balance end of the period</h4>
                     <span className="w-48 text-right font-bold">{correctedBankBalance.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-black mt-1"></div>
@@ -272,7 +272,7 @@ const SummaryCalculation = ({
 
         <div>
              <div className="flex justify-between items-end border-b-2 border-black pb-1">
-                <h4 className="font-bold">Ledger Balance end of the period</h4>
+                <h4 className="font-bold">Book Balance end of the period</h4>
                 <span className="font-bold w-48 text-right">
                     {Number(formValues.balanceAsPerBook || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
@@ -321,7 +321,7 @@ const SummaryCalculation = ({
 
              <div className="pt-2 mt-2">
                 <div className="flex justify-between items-center">
-                    <h4 className="font-bold">Corrected Balance end of the period</h4>
+                    <h4 className="font-bold">Corrected Book Balance end of the period</h4>
                     <span className="w-48 text-right font-bold">{correctedBookBalance.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-black mt-1"></div>
