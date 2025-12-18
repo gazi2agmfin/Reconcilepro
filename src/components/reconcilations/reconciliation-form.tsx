@@ -21,7 +21,6 @@ import { collection, doc, serverTimestamp } from "firebase/firestore";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-// --- SCHEMAS ---
 const itemSchema = z.object({
   narration: z.string().min(1, "Required"),
   amount: z.coerce.number().min(0),
@@ -41,33 +40,25 @@ const reconciliationSchema = z.object({
 
 type ReconciliationFormValues = z.infer<typeof reconciliationSchema>;
 
-// --- DYNAMIC LIST COMPONENT ---
 const DynamicItemList = ({ control, name, label, title }: any) => {
   const { fields, append, remove } = useFieldArray({ control, name });
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between border-b pb-2">
-        <h3 className="font-bold text-sm uppercase tracking-wider text-slate-700">{title}</h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => append({ narration: "", amount: 0 })}
-          className="h-8 text-xs"
-        >
-          <PlusCircle className="mr-1 h-3 w-3" /> Add
+        <h3 className="font-bold text-xs uppercase tracking-widest text-slate-600">{title}</h3>
+        <Button type="button" variant="outline" size="sm" onClick={() => append({ narration: "", amount: 0 })} className="h-7 text-[10px]">
+          <PlusCircle className="mr-1 h-3 w-3" /> ADD ITEM
         </Button>
       </div>
-      <p className="text-[11px] text-muted-foreground italic">{label}</p>
+      <p className="text-[10px] text-muted-foreground italic mb-2">{label}</p>
       {fields.map((field, index) => (
-        <div key={field.id} className="flex gap-2 items-start">
+        <div key={field.id} className="flex gap-2 items-start group">
           <Controller
             control={control}
             name={`${name}.${index}.narration`}
             render={({ field }) => (
               <FormItem className="flex-1">
-                <Textarea placeholder="Narration..." {...field} className="min-h-[40px] text-sm resize-none" />
+                <Textarea placeholder="Entry description..." {...field} className="min-h-[38px] text-sm resize-none py-1" />
               </FormItem>
             )}
           />
@@ -76,11 +67,11 @@ const DynamicItemList = ({ control, name, label, title }: any) => {
             name={`${name}.${index}.amount`}
             render={({ field }) => (
               <FormItem>
-                <Input type="number" step="0.01" className="w-28 text-right text-sm" {...field} />
+                <Input type="number" step="0.01" className="w-24 text-right text-sm h-[38px]" {...field} />
               </FormItem>
             )}
           />
-          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive">
+          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-[38px] w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -89,10 +80,8 @@ const DynamicItemList = ({ control, name, label, title }: any) => {
   );
 };
 
-// --- SUMMARY & PRINT VIEW ---
 const SummaryCalculation = ({ control, reportHeading }: { control: any, reportHeading?: string }) => {
   const formValues = useWatch({ control });
-
   const calculateTotal = (arr: any[]) => (arr || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
   const totalBankAdd = calculateTotal(formValues.additions);
@@ -102,140 +91,138 @@ const SummaryCalculation = ({ control, reportHeading }: { control: any, reportHe
   const totalBookAdd = calculateTotal(formValues.bookAdditions);
   const totalBookDed = calculateTotal(formValues.bookDeductions);
   const correctedBookBal = (Number(formValues.balanceAsPerBook) || 0) + totalBookAdd - totalBookDed;
-
   const diff = correctedBankBal - correctedBookBal;
 
+  const formatNum = (val: number) => val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   return (
-    <Card className="print-section !shadow-none border-t-4 border-t-primary rounded-none bg-white">
-      <CardContent className="p-8 space-y-6 text-[12px] leading-relaxed">
+    <Card className="print-section !shadow-none border-none rounded-none bg-white font-sans">
+      <CardContent className="p-10 space-y-6 text-[12px]">
         
-        {/* Professional Header */}
-        <div className="hidden print:block text-center space-y-1 mb-8 border-b pb-4">
-          <p className="text-[10px] text-right font-mono">BREB FORM NO. 285</p>
-          <h2 className="text-xl font-bold uppercase tracking-tight">{reportHeading || 'Gazipur Palli Bidyut Samity-2'}</h2>
-          <p className="text-sm">Rajendrapur, Gazipur</p>
-          <h3 className="text-md font-bold underline decoration-double pt-2 uppercase">Bank Reconciliation Statement</h3>
+        {/* Header Section */}
+        <div className="hidden print:block text-center space-y-1 mb-6">
+          <p className="text-[9px] text-right font-mono uppercase">BREB FORM NO. 285</p>
+          <h2 className="text-xl font-extrabold uppercase">{reportHeading || 'Gazipur Palli Bidyut Samity-2'}</h2>
+          <p className="text-[13px] font-medium">Rajendrapur, Gazipur</p>
+          <h3 className="text-[15px] font-bold border-b-2 border-black inline-block mt-4 px-4 uppercase italic">Bank Reconciliation Statement</h3>
         </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-4 border-y py-3 border-slate-200">
-          <div>
-            <p><span className="font-bold w-24 inline-block">Bank Name:</span> {formValues.bankName}</p>
-            <p><span className="font-bold w-24 inline-block">Bank Code:</span> {formValues.bankCode}</p>
+        {/* Bank & Date Meta */}
+        <div className="grid grid-cols-2 gap-10 border-y border-black py-4 mb-4">
+          <div className="space-y-1">
+            <p><span className="font-bold w-28 inline-block">Bank Name:</span> <span className="uppercase">{formValues.bankName}</span></p>
+            <p><span className="font-bold w-28 inline-block">Bank Code:</span> {formValues.bankCode}</p>
           </div>
-          <div className="text-right">
-            <p><span className="font-bold">Reconcile Date:</span> {formValues.reconciliationDate ? new Date(formValues.reconciliationDate).toLocaleDateString('en-GB') : ''}</p>
-            <p><span className="font-bold">Month:</span> {formValues.reconciliationDate ? new Date(formValues.reconciliationDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</p>
-          </div>
-        </div>
-
-        {/* Main Body */}
-        <div className="space-y-8">
-          {/* Section: Bank Side */}
-          <div className="space-y-2">
-            <div className="flex justify-between font-bold border-b border-black pb-1">
-              <span>1. Balance as per Bank Statement</span>
-              <span className="w-32 text-right">{Number(formValues.balanceAsPerBank || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            
-            <div className="pl-4 space-y-1">
-              <p className="font-semibold italic text-slate-700 underline">Add: Debit on Ledger records without Bank Credit:</p>
-              {(formValues.additions || []).map((item: any, i: number) => (
-                <div key={i} className="grid grid-cols-[1fr,120px] gap-2 border-b border-dotted border-slate-300">
-                  <span className="narration-text">{item.narration}</span>
-                  <span className="text-right self-end">{Number(item.amount).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between font-bold pt-1">
-                <span className="pl-4 text-slate-600">Total Additions (A)</span>
-                <span className="w-32 text-right border-t border-black">{totalBankAdd.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="pl-4 space-y-1 mt-4">
-              <p className="font-semibold italic text-slate-700 underline">Less: Credit on Ledger records without Bank Debit:</p>
-              {(formValues.deductions || []).map((item: any, i: number) => (
-                <div key={i} className="grid grid-cols-[1fr,120px] gap-2 border-b border-dotted border-slate-300">
-                  <span className="narration-text">{item.narration}</span>
-                  <span className="text-right self-end">{Number(item.amount).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between font-bold pt-1">
-                <span className="pl-4 text-slate-600">Total Deductions (B)</span>
-                <span className="w-32 text-right border-t border-black">({totalBankDed.toFixed(2)})</span>
-              </div>
-            </div>
-
-            <div className="flex justify-between font-bold text-sm border-t-2 border-double border-black mt-2 pt-1 bg-slate-50 px-2">
-              <span>Corrected Bank Balance</span>
-              <span className="w-32 text-right">{correctedBankBal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-          </div>
-
-          {/* Section: Book Side */}
-          <div className="space-y-2">
-            <div className="flex justify-between font-bold border-b border-black pb-1">
-              <span>2. Balance as per Cash Book (General Ledger)</span>
-              <span className="w-32 text-right">{Number(formValues.balanceAsPerBook || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-
-            <div className="pl-4 space-y-1">
-              <p className="font-semibold italic text-slate-700 underline">Add: Credit on Bank records without Ledger Debit:</p>
-              {(formValues.bookAdditions || []).map((item: any, i: number) => (
-                <div key={i} className="grid grid-cols-[1fr,120px] gap-2 border-b border-dotted border-slate-300">
-                  <span className="narration-text">{item.narration}</span>
-                  <span className="text-right self-end">{Number(item.amount).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between font-bold pt-1">
-                <span className="pl-4 text-slate-600">Total Additions (C)</span>
-                <span className="w-32 text-right border-t border-black">{totalBookAdd.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="pl-4 space-y-1 mt-4">
-              <p className="font-semibold italic text-slate-700 underline">Less: Debit on Bank records without Ledger Credit:</p>
-              {(formValues.bookDeductions || []).map((item: any, i: number) => (
-                <div key={i} className="grid grid-cols-[1fr,120px] gap-2 border-b border-dotted border-slate-300">
-                  <span className="narration-text">{item.narration}</span>
-                  <span className="text-right self-end">{Number(item.amount).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between font-bold pt-1">
-                <span className="pl-4 text-slate-600">Total Deductions (D)</span>
-                <span className="w-32 text-right border-t border-black">({totalBookDed.toFixed(2)})</span>
-              </div>
-            </div>
-
-            <div className="flex justify-between font-bold text-sm border-t-2 border-double border-black mt-2 pt-1 bg-slate-50 px-2">
-              <span>Corrected Book Balance</span>
-              <span className="w-32 text-right">{correctedBookBal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
+          <div className="text-right space-y-1">
+            <p><span className="font-bold">Reconcile Date:</span> {formValues.reconciliationDate ? new Date(formValues.reconciliationDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric'}) : ''}</p>
+            <p><span className="font-bold">For the month of:</span> {formValues.reconciliationDate ? new Date(formValues.reconciliationDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</p>
           </div>
         </div>
 
-        {/* Final Reconciled Status */}
-        <div className="flex justify-end pt-6">
-          <div className={cn("flex items-center gap-4 border-2 p-3 px-6", diff === 0 ? "border-green-600 bg-green-50" : "border-red-600 bg-red-50")}>
-            <span className="font-black text-sm uppercase">Unreconciled Difference:</span>
-            <span className="text-xl font-bold font-mono">{diff.toFixed(2)}</span>
+        {/* Bank Side Statement */}
+        <div className="space-y-4">
+          <div className="flex justify-between font-bold text-[13px] border-b border-black pb-1">
+            <span>Balance as per Bank end of the period</span>
+            <span className="w-36 text-right">{formatNum(formValues.balanceAsPerBank || 0)}</span>
+          </div>
+
+          <div className="pl-4 space-y-1">
+            <p className="font-bold underline italic mb-2">Add: Debit on Ledger Records Without corresponding Credit Bank records:</p>
+            {(formValues.additions || []).map((item: any, i: number) => (
+              <div key={i} className="ledger-row">
+                <span className="narration-text">{item.narration}</span>
+                <span className="text-right">{formatNum(item.amount)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between font-bold pt-2">
+              <span className="pl-6 italic">Total amount A:</span>
+              <span className="w-36 text-right border-t border-black">{formatNum(totalBankAdd)}</span>
+            </div>
+          </div>
+
+          <div className="pl-4 space-y-1 mt-4">
+            <p className="font-bold underline italic mb-2">Less: Credit on Ledger Records Without corresponding Debit Bank records:</p>
+            {(formValues.deductions || []).map((item: any, i: number) => (
+              <div key={i} className="ledger-row">
+                <span className="narration-text">{item.narration}</span>
+                <span className="text-right">{formatNum(item.amount)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between font-bold pt-2">
+              <span className="pl-6 italic">Total amount B:</span>
+              <span className="w-36 text-right border-t border-black">({formatNum(totalBankDed)})</span>
+            </div>
+          </div>
+
+          <div className="flex justify-between font-bold text-[14px] border-t-2 border-double border-black mt-2 pt-1 bg-gray-50 px-2">
+            <span>Corrected Balance end of the period</span>
+            <span className="w-36 text-right">{formatNum(correctedBankBal)}</span>
+          </div>
+        </div>
+
+        {/* Book Side Statement */}
+        <div className="space-y-4 mt-10">
+          <div className="flex justify-between font-bold text-[13px] border-b border-black pb-1">
+            <span>Balance as per Book end of the period</span>
+            <span className="w-36 text-right">{formatNum(formValues.balanceAsPerBook || 0)}</span>
+          </div>
+
+          <div className="pl-4 space-y-1">
+            <p className="font-bold underline italic mb-2">Add: Credit on Bank Records Without corresponding Debit Ledger records:</p>
+            {(formValues.bookAdditions || []).map((item: any, i: number) => (
+              <div key={i} className="ledger-row">
+                <span className="narration-text">{item.narration}</span>
+                <span className="text-right">{formatNum(item.amount)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between font-bold pt-2">
+              <span className="pl-6 italic">Total amount C:</span>
+              <span className="w-36 text-right border-t border-black">{formatNum(totalBookAdd)}</span>
+            </div>
+          </div>
+
+          <div className="pl-4 space-y-1 mt-4">
+            <p className="font-bold underline italic mb-2">Less: Debit on Bank Records Without corresponding Credit Ledger records:</p>
+            {(formValues.bookDeductions || []).map((item: any, i: number) => (
+              <div key={i} className="ledger-row">
+                <span className="narration-text">{item.narration}</span>
+                <span className="text-right">{formatNum(item.amount)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between font-bold pt-2">
+              <span className="pl-6 italic">Total amount D:</span>
+              <span className="w-36 text-right border-t border-black">({formatNum(totalBookDed)})</span>
+            </div>
+          </div>
+
+          <div className="flex justify-between font-bold text-[14px] border-t-2 border-double border-black mt-2 pt-1 bg-gray-50 px-2">
+            <span>Corrected Book Balance end of the period</span>
+            <span className="w-36 text-right">{formatNum(correctedBookBal)}</span>
+          </div>
+        </div>
+
+        {/* Difference Summary */}
+        <div className="flex justify-end pt-8">
+          <div className={cn("flex items-center gap-6 border-2 p-4 px-8", diff === 0 ? "border-green-600 bg-green-50" : "border-red-600 bg-red-50")}>
+            <span className="font-black text-sm uppercase tracking-tighter italic">Reconciliation Difference:</span>
+            <span className="text-2xl font-bold font-mono">{formatNum(diff)}</span>
           </div>
         </div>
 
         {/* Professional Footer Signatures */}
-        <div className="hidden print:block pt-32 pb-16"> 
-          <div className="grid grid-cols-3 gap-12 text-center">
+        <div className="hidden print:block pt-32 pb-20"> 
+          <div className="grid grid-cols-3 gap-16 text-center">
             <div className="border-t border-black pt-2">
-              <p className="font-bold uppercase text-[10px]">Prepared by</p>
-              <p className="mt-1">Assistant Accountant</p>
+              <p className="font-extrabold uppercase text-[10px]">Prepared by</p>
+              <p className="text-[11px] mt-1 font-medium">Assistant Accountant</p>
             </div>
             <div className="border-t border-black pt-2">
-              <p className="font-bold uppercase text-[10px]">Verified by</p>
-              <p className="mt-1">Accountant</p>
+              <p className="font-extrabold uppercase text-[10px]">Verified by</p>
+              <p className="text-[11px] mt-1 font-medium">Accountant</p>
             </div>
             <div className="border-t border-black pt-2">
-              <p className="font-bold uppercase text-[10px]">Approved by</p>
-              <p className="mt-1">AGM (Finance)</p>
+              <p className="font-extrabold uppercase text-[10px]">Approved by</p>
+              <p className="text-[11px] mt-1 font-medium">AGM (Finance)</p>
             </div>
           </div>
         </div>
@@ -244,17 +231,16 @@ const SummaryCalculation = ({ control, reportHeading }: { control: any, reportHe
   );
 };
 
-// --- MAIN FORM EXPORT ---
 export function ReconciliationForm({ isEditMode = false, defaultValues, reconciliationId }: any) {
   const router = useRouter();
   const { toast } = useToast();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const printRef = useRef<HTMLDivElement | null>(null);
-  
   const firestore = useFirestore();
   const { user } = useUser();
+  
   const banksCollectionRef = useMemoFirebase(() => collection(firestore, 'banks'), [firestore]);
-  const { data: banks, isLoading: banksLoading } = useCollection<{code: string, name: string}>(banksCollectionRef);
+  const { data: banks } = useCollection<{code: string, name: string}>(banksCollectionRef);
   const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'report'), [firestore]);
   const { data: settingsData } = useDoc<{ reportHeading: string }>(settingsRef);
 
@@ -289,13 +275,12 @@ export function ReconciliationForm({ isEditMode = false, defaultValues, reconcil
     if (!user) return;
     const payload = { ...data, userId: user.uid, updatedAt: serverTimestamp() };
     const collPath = `users/${user.uid}/reconciliations`;
-    
     if (isEditMode && reconciliationId) {
       updateDocumentNonBlocking(doc(firestore, collPath, reconciliationId), payload);
     } else {
       addDocumentNonBlocking(collection(firestore, collPath), { ...payload, createdAt: serverTimestamp() });
     }
-    toast({ title: "Success", description: "Reconciliation processed." });
+    toast({ title: "Statement Saved", description: "Successfully updated database." });
     router.push("/reconciliations");
   };
 
@@ -304,7 +289,12 @@ export function ReconciliationForm({ isEditMode = false, defaultValues, reconcil
     if (!element) return;
     document.body.classList.add('print-styles-active');
     
-    const canvas = await html2canvas(element, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
+    const canvas = await html2canvas(element, { 
+      scale: 3, 
+      useCORS: true, 
+      backgroundColor: "#ffffff",
+      windowWidth: 1200 
+    });
     document.body.classList.remove('print-styles-active');
 
     const imgData = canvas.toDataURL('image/png');
@@ -312,38 +302,38 @@ export function ReconciliationForm({ isEditMode = false, defaultValues, reconcil
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`reconciliation-${form.getValues('bankCode') || 'report'}.pdf`);
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+    pdf.save(`reconciliation-${form.getValues('bankCode')}.pdf`);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-20">
-        <Card className="no-print border-none shadow-sm bg-slate-50">
-          <CardContent className="p-6 grid md:grid-cols-4 gap-4 items-end">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-32">
+        <Card className="no-print border-none shadow-sm bg-slate-50/80">
+          <CardContent className="p-6 grid md:grid-cols-4 gap-6 items-end">
             <FormField
               control={form.control}
               name="bankCode"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Bank Code</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase text-slate-500">Bank Search</FormLabel>
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="justify-between w-full font-normal">
+                      <Button variant="outline" className="justify-between w-full h-11">
                         {field.value || "Select Bank..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0">
+                    <PopoverContent className="w-[320px] p-0">
                       <Command>
-                        <CommandInput placeholder="Search bank..." />
+                        <CommandInput placeholder="Search bank code or name..." />
                         <CommandList>
-                          <CommandEmpty>No banks found.</CommandEmpty>
+                          <CommandEmpty>No results found.</CommandEmpty>
                           <CommandGroup>
                             {bankOptions.map((opt) => (
                               <CommandItem key={opt.value} onSelect={() => { form.setValue("bankCode", opt.value); setPopoverOpen(false); }}>
                                 <Check className={cn("mr-2 h-4 w-4", opt.value === field.value ? "opacity-100" : "opacity-0")} />
-                                {opt.label} ({opt.value})
+                                {opt.label} - {opt.value}
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -354,60 +344,52 @@ export function ReconciliationForm({ isEditMode = false, defaultValues, reconcil
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="bankName"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Bank Name</FormLabel>
-                  <Input readOnly {...field} className="bg-slate-100" />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="reconciliationDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reconciliation Date</FormLabel>
-                  <Input type="date" {...field} />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="bankName" render={({ field }) => (
+              <FormItem className="md:col-span-2"><FormLabel className="text-xs font-bold uppercase text-slate-500">Official Bank Name</FormLabel><Input readOnly {...field} className="h-11 bg-white font-medium" /></FormItem>
+            )} />
+            <FormField control={form.control} name="reconciliationDate" render={({ field }) => (
+              <FormItem><FormLabel className="text-xs font-bold uppercase text-slate-500">Report Date</FormLabel><Input type="date" {...field} className="h-11 bg-white" /></FormItem>
+            )} />
           </CardContent>
         </Card>
 
-        {/* Input Lists */}
+        {/* Management Inputs Section */}
         <div className="no-print grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card><CardContent className="p-6"><DynamicItemList control={form.control} name="additions" title="Bank Additions" label="Checks issued but not presented" /></CardContent></Card>
-          <Card><CardContent className="p-6"><DynamicItemList control={form.control} name="deductions" title="Bank Deductions" label="Deposits in transit" /></CardContent></Card>
-          <Card><CardContent className="p-6"><DynamicItemList control={form.control} name="bookAdditions" title="Book Additions" label="Interest earned / Direct credits" /></CardContent></Card>
-          <Card><CardContent className="p-6"><DynamicItemList control={form.control} name="bookDeductions" title="Book Deductions" label="Bank charges / Direct debits" /></CardContent></Card>
+          <Card className="border-none shadow-sm"><CardContent className="p-6"><DynamicItemList control={form.control} name="additions" title="Bank Side: Additions" label="Checks issued but not yet cleared (Outstanding)" /></CardContent></Card>
+          <Card className="border-none shadow-sm"><CardContent className="p-6"><DynamicItemList control={form.control} name="deductions" title="Bank Side: Deductions" label="Deposits made but not in bank record (Transit)" /></CardContent></Card>
+          <Card className="border-none shadow-sm"><CardContent className="p-6"><DynamicItemList control={form.control} name="bookAdditions" title="Book Side: Additions" label="Direct bank credits or interest earned" /></CardContent></Card>
+          <Card className="border-none shadow-sm"><CardContent className="p-6"><DynamicItemList control={form.control} name="bookDeductions" title="Book Side: Deductions" label="Bank charges or direct ledger debits" /></CardContent></Card>
         </div>
 
-        {/* Live Calculation & Print Section */}
-        <div ref={printRef} className="rounded-lg shadow-lg overflow-hidden border">
-           <div className="no-print bg-slate-800 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest">Preview & Statement Summary</div>
-           
-           <div className="p-4 no-print bg-slate-50 border-b grid grid-cols-2 gap-8">
-             <FormField control={form.control} name="balanceAsPerBank" render={({ field }) => (
-                <FormItem><FormLabel className="text-blue-700 font-bold">Initial Bank Balance</FormLabel><Input type="number" step="0.01" {...field} /></FormItem>
-             )} />
-             <FormField control={form.control} name="balanceAsPerBook" render={({ field }) => (
-                <FormItem><FormLabel className="text-green-700 font-bold">Initial Book Balance</FormLabel><Input type="number" step="0.01" {...field} /></FormItem>
-             )} />
+        {/* Live Preview Container */}
+        <div ref={printRef} className="rounded-xl border shadow-2xl bg-white overflow-hidden max-w-[210mm] mx-auto">
+           <div className="no-print bg-slate-900 text-white px-8 py-3 flex justify-between items-center">
+             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Official Statement Preview</span>
+             <div className="flex gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase text-slate-400">Bank End Balance</span>
+                  <Controller control={form.control} name="balanceAsPerBank" render={({ field }) => (
+                    <input type="number" step="0.01" {...field} className="bg-transparent text-sm font-bold border-none focus:ring-0 text-right w-24 p-0" />
+                  )} />
+                </div>
+                <div className="flex flex-col border-l border-slate-700 pl-4">
+                  <span className="text-[9px] uppercase text-slate-400">Book End Balance</span>
+                  <Controller control={form.control} name="balanceAsPerBook" render={({ field }) => (
+                    <input type="number" step="0.01" {...field} className="bg-transparent text-sm font-bold border-none focus:ring-0 text-right w-24 p-0" />
+                  )} />
+                </div>
+             </div>
            </div>
-
            <SummaryCalculation control={form.control} reportHeading={settingsData?.reportHeading} />
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-4 no-print bg-white p-4 border rounded-lg shadow-sm sticky bottom-4 z-10">
-          <Button type="button" variant="outline" onClick={handleDownloadPdf} className="gap-2">
-            <FileDown className="h-4 w-4" /> Download PDF
+        {/* Fixed Action Bar */}
+        <div className="no-print fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t p-4 flex justify-center items-center gap-6 shadow-2xl z-50">
+          <Button type="button" variant="outline" onClick={handleDownloadPdf} className="h-12 px-8 gap-3 border-slate-300 hover:bg-slate-50 transition-all font-bold uppercase text-xs tracking-widest">
+            <FileDown className="h-4 w-4" /> Download Statement
           </Button>
-          <Button type="submit" className="gap-2 px-8">
-            <Save className="h-4 w-4" /> {isEditMode ? "Update Statement" : "Save Statement"}
+          <Button type="submit" className="h-12 px-12 gap-3 shadow-lg shadow-primary/20 transition-all font-bold uppercase text-xs tracking-widest">
+            <Save className="h-4 w-4" /> {isEditMode ? "Update Changes" : "Confirm & Save"}
           </Button>
         </div>
       </form>
