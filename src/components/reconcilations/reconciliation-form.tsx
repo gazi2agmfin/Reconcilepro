@@ -283,29 +283,43 @@ export function ReconciliationForm({ isEditMode = false, defaultValues, reconcil
     toast({ title: "Statement Saved", description: "Successfully updated database." });
     router.push("/reconciliations");
   };
+const handleDownloadPdf = async () => {
+  const element = printRef.current;
+  if (!element) return;
 
-  const handleDownloadPdf = async () => {
-    const element = printRef.current;
-    if (!element) return;
-    document.body.classList.add('print-styles-active');
-    
-    const canvas = await html2canvas(element, { 
-      scale: 3, 
-      useCORS: true, 
-      backgroundColor: "#ffffff",
-      windowWidth: 1200 
-    });
-    document.body.classList.remove('print-styles-active');
+  // 1. Prepare for capture
+  document.body.classList.add('print-styles-active');
+  
+  const canvas = await html2canvas(element, { 
+    scale: 3, 
+    useCORS: true, 
+    backgroundColor: "#ffffff",
+    windowWidth: 1200 
+  });
+  
+  document.body.classList.remove('print-styles-active');
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  // 2. Generate Date String (e.g., "November 2025")
+  const dateValue = form.getValues('reconciliationDate');
+  const bankName = form.getValues('bankName') || "Statement";
+  
+  const formattedDate = dateValue 
+    ? new Date(dateValue).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : "Date-Unknown";
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-    pdf.save(`reconciliation-${form.getValues('bankCode')}.pdf`);
-  };
+  // 3. Create PDF
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
+  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+
+  // 4. Save with requested name format: "Bank Name:Month Year"
+  // Note: Colons are usually replaced with dashes or underscores in filenames for OS compatibility
+  pdf.save(`${bankName}_${formattedDate}.pdf`);
+};
+ 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-32">
