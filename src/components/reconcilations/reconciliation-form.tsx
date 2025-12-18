@@ -1,8 +1,9 @@
 "use client";
 
-import { useForm, useFieldArray, Controller, useWatch, Control } from "react-hook-form";
+import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+<<<<<<< HEAD
 <<<<<<< HEAD
 import { PlusCircle, Trash2, Download } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -54,12 +55,22 @@ function DynamicItemList({
   const { fields, append, remove } = useFieldArray({ control, name });
 =======
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
+=======
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+>>>>>>> 89d01bd (message)
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2, ChevronsUpDown, FileDown, Save, Plus } from "lucide-react";
-import { useState, useRef } from "react";
+import { PlusCircle, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -71,39 +82,52 @@ import { collection, doc, serverTimestamp } from "firebase/firestore";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-// --- SCHEMAS & TYPES ---
+
 const itemSchema = z.object({
-  narration: z.string().min(1, "Required").default(""),
-  amount: z.coerce.number().min(0).default(0),
+  narration: z.string().min(1, "Narration is required."),
+  amount: z.coerce.number().min(0, "Amount must be positive."),
 });
 
 const reconciliationSchema = z.object({
   bankCode: z.string().min(1, "Bank code is required."),
-  bankName: z.string().default(""),
+  bankName: z.string(),
   reconciliationDate: z.string().min(1, "Date is required."),
-  balanceAsPerBank: z.coerce.number().default(0),
-  additions: z.array(itemSchema).default([]),
-  deductions: z.array(itemSchema).default([]),
-  bookAdditions: z.array(itemSchema).default([]),
-  bookDeductions: z.array(itemSchema).default([]),
-  balanceAsPerBook: z.coerce.number().default(0),
+  balanceAsPerBank: z.coerce.number(),
+  // Bank Side
+  additions: z.array(itemSchema),
+  deductions: z.array(itemSchema),
+  // Book Side
+  bookAdditions: z.array(itemSchema),
+  bookDeductions: z.array(itemSchema),
+  balanceAsPerBook: z.coerce.number(),
 });
 
-type ReconciliationFormValues = z.infer<typeof reconciliationSchema>;
-type Item = z.infer<typeof itemSchema>;
 
-// --- DYNAMIC LIST COMPONENT ---
-interface DynamicListProps {
-  control: Control<ReconciliationFormValues>;
+type ReconciliationFormValues = z.infer<typeof reconciliationSchema>;
+
+const DynamicItemList = ({
+  control,
+  name,
+  label,
+  title,
+}: {
+  control: any;
   name: "additions" | "deductions" | "bookAdditions" | "bookDeductions";
   label: string;
   title: string;
+<<<<<<< HEAD
 }
 >>>>>>> 4fcfa8d (message)
+=======
+}) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name,
+  });
+>>>>>>> 89d01bd (message)
 
-const DynamicItemList = ({ control, name, label, title }: DynamicListProps) => {
-  const { fields, append, remove, insert } = useFieldArray({ control, name });
   return (
+<<<<<<< HEAD
 <<<<<<< HEAD
     <Card className="shadow-sm border-slate-200">
       <CardContent className="p-5 space-y-4">
@@ -249,17 +273,32 @@ export default function ReconciliationForm() {
         <h3 className="font-bold text-xs uppercase tracking-widest text-slate-600">{title}</h3>
         <Button type="button" variant="outline" size="sm" onClick={() => append({ narration: "", amount: 0 })} className="h-7 text-[10px]">
           <PlusCircle className="mr-1 h-3 w-3" /> ADD ROW
+=======
+    <div className="space-y-2">
+      <div className="flex items-center no-print">
+        <h3 className="font-semibold text-lg flex-1">{title}</h3>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => append({ narration: "", amount: 0 })}
+          className="no-print"
+        >
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Item
+>>>>>>> 89d01bd (message)
         </Button>
       </div>
-      <p className="text-[10px] text-muted-foreground italic mb-2">{label}</p>
+      <p className="font-semibold print:font-normal">{label}</p>
       {fields.map((field, index) => (
-        <div key={field.id} className="flex gap-2 items-start relative pb-1">
+        <div key={field.id} className="flex gap-4 items-start">
           <Controller
             control={control}
             name={`${name}.${index}.narration`}
             render={({ field }) => (
               <FormItem className="flex-1">
-                <Textarea placeholder="Description..." {...field} className="min-h-[38px] text-sm resize-none py-1 border-slate-200" />
+                <Textarea placeholder="Enter narration..." {...field} className="print:hidden"/>
+                <span className="hidden print:inline">{field.value}</span>
               </FormItem>
             )}
           />
@@ -268,192 +307,410 @@ export default function ReconciliationForm() {
             name={`${name}.${index}.amount`}
             render={({ field }) => (
               <FormItem>
-                <Input type="number" step="0.01" className="w-24 text-right text-sm h-[38px] font-mono" {...field} />
+                <Input
+                  type="number"
+                  step="0.00"
+                  placeholder="0.00"
+                  className="w-40 text-right"
+                  {...field}
+                />
               </FormItem>
             )}
           />
-          <div className="flex flex-col gap-1 pt-0.5">
-            <Button type="button" variant="outline" size="icon" onClick={() => insert(index + 1, { narration: "", amount: 0 })} className="h-4 w-7 text-blue-600 border-blue-200">
-              <Plus className="h-3 w-3" />
-            </Button>
-            <Button type="button" variant="outline" size="icon" onClick={() => remove(index)} className="h-4 w-7 text-destructive border-red-200">
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => remove(index)}
+            className="no-print"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       ))}
     </div>
   );
 };
 
-// --- PREVIEW COMPONENT ---
-const SummaryCalculation = ({ control, reportHeading }: { control: Control<ReconciliationFormValues>, reportHeading?: string }) => {
+const SummaryCalculation = ({ control, reportHeading, isEditMode }: { control: any, reportHeading?: string, isEditMode?: boolean }) => {
   const formValues = useWatch({ control });
 
-  const formatNum = (val: number | undefined) => (val ?? 0).toLocaleString(undefined, { 
-    minimumFractionDigits: 2, 
-    maximumFractionDigits: 2 
-  });
+  // Bank side calculations
+  const totalBankAdditions = useMemo(() => (formValues.additions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.additions]);
+  const totalBankDeductions = useMemo(() => (formValues.deductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.deductions]);
+  const correctedBankBalance = useMemo(() => (Number(formValues.balanceAsPerBank) || 0) + totalBankAdditions - totalBankDeductions, [formValues.balanceAsPerBank, totalBankAdditions, totalBankDeductions]);
 
-  const calculateTotal = (arr: Item[] | undefined) => (arr ?? []).reduce((sum, item) => sum + (item.amount || 0), 0);
+  // Book side calculations
+  const totalBookAdditions = useMemo(() => (formValues.bookAdditions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.bookAdditions]);
+  const totalBookDeductions = useMemo(() => (formValues.bookDeductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0), [formValues.bookDeductions]);
+  const correctedBookBalance = useMemo(() => (Number(formValues.balanceAsPerBook) || 0) + totalBookAdditions - totalBookDeductions, [formValues.balanceAsPerBook, totalBookAdditions, totalBookDeductions]);
 
-  const balBank = Number(formValues.balanceAsPerBank) || 0;
-  const totalBankAdd = calculateTotal(formValues.additions);
-  const totalBankDed = calculateTotal(formValues.deductions);
-  const correctedBankBal = balBank + totalBankAdd - totalBankDed;
+  const difference = useMemo(() => correctedBankBalance - correctedBookBalance, [correctedBankBalance, correctedBookBalance]);
 
-  const balBook = Number(formValues.balanceAsPerBook) || 0;
-  const totalBookAdd = calculateTotal(formValues.bookAdditions);
-  const totalBookDed = calculateTotal(formValues.bookDeductions);
-  const correctedBookBal = balBook + totalBookAdd - totalBookDed;
-  const diff = correctedBankBal - correctedBookBal;
+  useEffect(() => {
+    // Only notify header for draft (new) reconciliations, not when editing existing ones
+    if (isEditMode) {
+      try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
+      return;
+    }
+
+    try {
+      window.dispatchEvent(new CustomEvent('reconciliation:differenceDraft', { detail: difference }));
+    } catch (e) {
+      // ignore in non-browser contexts
+    }
+
+    return () => {
+      try { window.dispatchEvent(new CustomEvent('reconciliation:differenceDraftCleared')); } catch (e) {}
+    };
+  }, [difference, isEditMode]);
+
 
   return (
-    <Card className="print-section !shadow-none border-none rounded-none bg-white text-slate-900">
-      <CardContent className="p-10 space-y-6 text-[12px]">
-        {/* Header */}
-        <div className="hidden print:block text-center space-y-1 mb-6">
-          <p className="text-[9px] text-right font-mono uppercase">BREB FORM NO. 285</p>
-          <h2 className="text-xl font-extrabold uppercase">{reportHeading || 'Gazipur Palli Bidyut Samity-2'}</h2>
-          <h3 className="text-[15px] font-bold border-b-2 border-black inline-block mt-4 px-4 uppercase italic">Bank Reconciliation Statement</h3>
+    <Card className="print-section !shadow-none !border-0">
+        <CardContent className="space-y-4 !p-0">
+
+        {/* Print Header */}
+        <div className="hidden print:block text-center mb-8">
+            <p className="text-xs">BREB FORM NO.285</p>
+            <h2 className="text-xl font-bold">{reportHeading || 'Gazipur Palli Bidyut Samity-2'}</h2>
+            <p>Rajendrapur,Gazipur</p>
+            <p className="font-bold">Bank Reconciliation</p>
+        </div>
+        
+        {/* Bank & Date Info */}
+        <div className="grid md:grid-cols-2 gap-6 print:grid-cols-2">
+            <div className="print:text-left">
+                <span className="font-bold">Bank Name:</span> {formValues.bankName}
+                <br />
+                <span className="font-bold">Bank Code:</span> {formValues.bankCode}
+            </div>
+            <div className="print:text-right">
+                <span className="font-bold">Reconcile Date:</span> {formValues.reconciliationDate ? new Date(formValues.reconciliationDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric'}) : ''}
+                <br />
+                <span className="font-bold">Reconcile Month:</span> {formValues.reconciliationDate ? new Date(formValues.reconciliationDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric'}) : ''}
+            </div>
+        </div>
+        
+        {/* --- Bank Section --- */}
+        <div className="space-y-2 pt-4">
+            <div className="flex justify-between items-center border-b-2 border-black pb-1">
+                <h4 className="font-bold">Bank Balance end of the period</h4>
+                <FormField
+                    control={control}
+                    name="balanceAsPerBank"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormControl>
+                        <Input type="number" step="0.00" className="w-40 text-right font-bold" {...field} />
+                        </FormControl>
+                    </FormItem>
+                    )}
+                />
+            </div>
+            <div className="grid grid-cols-[auto,1fr,160px] items-center">
+                <div className="font-bold pr-2">Add:</div>
+                <div className="col-span-2">Debit on Ledger Records Without corresponding Credit Bank records:</div>
+            </div>
+             { (formValues.additions || []).map((item:any, index:number) => (
+                <div key={`bank_add_${index}`} className="grid grid-cols-[auto,1fr,160px] items-center pl-8">
+                    <div/>
+                    <div>{item.narration}</div>
+                    <div className="text-right pr-1">{Number(item.amount).toFixed(2)}</div>
+                </div>
+             ))}
+             <div className="grid grid-cols-[auto,1fr,160px] items-center">
+                <div/>
+                <div className="text-right font-bold pr-2">Total amount A:</div>
+                <div className="text-right border-t border-black font-bold">{totalBankAdditions.toFixed(2)}</div>
+             </div>
+
+             <div className="grid grid-cols-[auto,1fr,160px] items-center pt-2">
+                <div className="font-bold pr-2">Less:</div>
+                <div className="col-span-2">Credit on Ledger Records Without corresponding Debit Bank records:</div>
+            </div>
+             { (formValues.deductions || []).map((item:any, index:number) => (
+                <div key={`bank_deduct_${index}`} className="grid grid-cols-[auto,1fr,160px] items-center pl-8">
+                    <div/>
+                    <div>{item.narration}</div>
+                    <div className="text-right pr-1">{Number(item.amount).toFixed(2)}</div>
+                </div>
+             ))}
+             <div className="grid grid-cols-[auto,1fr,160px] items-center">
+                <div/>
+                <div className="text-right font-bold pr-2">Total amount B:</div>
+                <div className="text-right border-t border-black font-bold">({totalBankDeductions.toFixed(2)})</div>
+             </div>
+
+             <div className="flex justify-between items-center border-t-4 border-double border-black pt-2 mt-2">
+                <h4 className="font-bold">Corrected Bank Balance end of the period</h4>
+                <span className="w-40 text-right font-bold">{correctedBankBalance.toFixed(2)}</span>
+            </div>
         </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-10 border-y border-black py-4">
-          <div className="space-y-1 text-left">
-            <p><span className="font-bold w-28 inline-block">Bank Name:</span> <span className="uppercase">{formValues.bankName}</span></p>
-            <p><span className="font-bold w-28 inline-block">Bank Code:</span> {formValues.bankCode}</p>
-          </div>
-          <div className="text-right space-y-1">
-            <p><span className="font-bold">Reconcile Date:</span> {formValues.reconciliationDate}</p>
-            <p><span className="font-bold">Month:</span> {formValues.reconciliationDate ? new Date(formValues.reconciliationDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</p>
-          </div>
+        {/* --- Book Section --- */}
+        <div className="space-y-2 pt-4">
+             <div className="flex justify-between items-center border-b-2 border-black pb-1">
+                <h4 className="font-bold"> Book Balance end of the period</h4>
+                 <FormField
+                    control={control}
+                    name="balanceAsPerBook"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormControl>
+                        <Input type="number" step="0.00" className="w-40 text-right font-bold" {...field} />
+                        </FormControl>
+                    </FormItem>
+                    )}
+                />
+            </div>
+            <div className="grid grid-cols-[auto,1fr,160px] items-center">
+                <div className="font-bold pr-2">Add:</div>
+                <div className="col-span-2">Credit on Bank Records Without corresponding Debit Ledger records:</div>
+            </div>
+             { (formValues.bookAdditions || []).map((item:any, index:number) => (
+                <div key={`book_add_${index}`} className="grid grid-cols-[auto,1fr,160px] items-center pl-8">
+                    <div/>
+                    <div>{item.narration}</div>
+                    <div className="text-right pr-1">{Number(item.amount).toFixed(2)}</div>
+                </div>
+             ))}
+             <div className="grid grid-cols-[auto,1fr,160px] items-center">
+                <div/>
+                <div className="text-right font-bold pr-2">Total amount A:</div>
+                <div className="text-right border-t border-black font-bold">{totalBookAdditions.toFixed(2)}</div>
+             </div>
+
+            <div className="grid grid-cols-[auto,1fr,160px] items-center pt-2">
+                <div className="font-bold pr-2">Less:</div>
+                <div className="col-span-2">Debit on Bank Records Without corresponding Credit Ledger records:</div>
+            </div>
+             { (formValues.bookDeductions || []).map((item:any, index:number) => (
+                <div key={`book_deduct_${index}`} className="grid grid-cols-[auto,1fr,160px] items-center pl-8">
+                    <div/>
+                    <div>{item.narration}</div>
+                    <div className="text-right pr-1">{Number(item.amount).toFixed(2)}</div>
+                </div>
+             ))}
+             <div className="grid grid-cols-[auto,1fr,160px] items-center">
+                <div/>
+                <div className="text-right font-bold pr-2">Total amount B:</div>
+                <div className="text-right border-t border-black font-bold">({totalBookDeductions.toFixed(2)})</div>
+             </div>
+
+             <div className="flex justify-between items-center border-t-2 border-black pt-2 mt-2">
+                <h4 className="font-bold">Corrected Book Balance end of the period</h4>
+                <span className="w-40 text-right font-bold">{correctedBookBalance.toFixed(2)}</span>
+            </div>
         </div>
 
-        {/* BANK SIDE */}
-        <div className="space-y-4 pt-4">
-          <div className="flex justify-between font-bold border-b border-black pb-1 uppercase">
-            <span>Balance as per Bank end of the period</span>
-            <span className="w-36 text-right font-mono">{formatNum(balBank)}</span>
-          </div>
-          <div className="pl-4 space-y-1">
-            <p className="font-bold italic underline text-[11px] mb-2">Add: Debit on Ledger records without Bank Credit:</p>
-            {(formValues.additions ?? []).map((item, i) => (
-              <div key={i} className="grid grid-cols-[1fr_140px] gap-2 border-b border-dotted py-1 items-start">
-                <span className="text-left leading-tight break-words">{item.narration}</span>
-                <span className="text-right font-mono">{formatNum(item.amount)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between font-bold pt-2"><span>Total Additions:</span><span className="w-36 text-right border-t border-black">{formatNum(totalBankAdd)}</span></div>
-          </div>
-          <div className="pl-4 space-y-1 mt-4">
-            <p className="font-bold italic underline text-[11px] mb-2">Less: Credit on Ledger records without Bank Debit:</p>
-            {(formValues.deductions ?? []).map((item, i) => (
-              <div key={i} className="grid grid-cols-[1fr_140px] gap-2 border-b border-dotted py-1 items-start">
-                <span className="text-left leading-tight break-words">{item.narration}</span>
-                <span className="text-right font-mono">{formatNum(item.amount)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between font-bold pt-2"><span>Total Deductions:</span><span className="w-36 text-right border-t border-black">({formatNum(totalBankDed)})</span></div>
-          </div>
-          <div className="flex justify-between font-bold text-[13px] border-t-2 border-double border-black mt-2 pt-1 px-2 bg-slate-50 uppercase">
-            <span>Corrected Bank Balance end of the Month</span>
-            <span className="w-36 text-right font-mono">{formatNum(correctedBankBal)}</span>
-          </div>
+        <div className="flex justify-end items-center pt-4">
+            <h4 className="font-bold text-red-600">Difference</h4>
+            <div className="w-40 text-right font-bold border-2 border-black ml-4 p-1">{difference.toFixed(2)}</div>
         </div>
 
-        {/* LEDGER SIDE */}
-        <div className="space-y-4 pt-10">
-          <div className="flex justify-between font-bold border-b border-black pb-1 uppercase">
-            <span>Balance as per Ledger end of the period</span>
-            <span className="w-36 text-right font-mono">{formatNum(balBook)}</span>
-          </div>
-          <div className="pl-4 space-y-1">
-            <p className="font-bold italic underline text-[11px] mb-2">Add: Credit on Bank records without Ledger Debit:</p>
-            {(formValues.bookAdditions ?? []).map((item, i) => (
-              <div key={i} className="grid grid-cols-[1fr_140px] gap-2 border-b border-dotted py-1 items-start">
-                <span className="text-left leading-tight break-words">{item.narration}</span>
-                <span className="text-right font-mono">{formatNum(item.amount)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between font-bold pt-2"><span>Total Additions:</span><span className="w-36 text-right border-t border-black">{formatNum(totalBookAdd)}</span></div>
-          </div>
-          <div className="pl-4 space-y-1 mt-4">
-            <p className="font-bold italic underline text-[11px] mb-2">Less: Debit on Bank records without Ledger Credit:</p>
-            {(formValues.bookDeductions ?? []).map((item, i) => (
-              <div key={i} className="grid grid-cols-[1fr_140px] gap-2 border-b border-dotted py-1 items-start">
-                <span className="text-left leading-tight break-words">{item.narration}</span>
-                <span className="text-right font-mono">{formatNum(item.amount)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between font-bold pt-2"><span>Total Deductions:</span><span className="w-36 text-right border-t border-black">({formatNum(totalBookDed)})</span></div>
-          </div>
-          <div className="flex justify-between font-bold text-[13px] border-t-2 border-double border-black mt-2 pt-1 px-2 bg-slate-50 uppercase">
-            <span>Corrected Ledger Balance end of the Month</span>
-            <span className="w-36 text-right font-mono">{formatNum(correctedBookBal)}</span>
-          </div>
+        {/* Footer */}
+        <div className="hidden print:block pt-24">
+            <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <p className="border-t border-black pt-2">Prepared by</p>
+                    <p className="mt-2">Assistant Accountant</p>
+                </div>
+                 <div>
+                    <p className="border-t border-black pt-2">Verified by</p>
+                     <p className="mt-2">Accountant</p>
+                </div>
+                 <div>
+                    <p className="border-t border-black pt-2">Approved by</p>
+                     <p className="mt-2">AGM(Finance)</p>
+                </div>
+            </div>
         </div>
 
-        {/* Unbalance Warning */}
-        <div className="flex justify-end pt-8">
-          <div className={cn("border-2 p-4 px-8 font-bold", Math.abs(diff) < 0.01 ? "border-green-600 bg-green-50 text-green-700" : "border-red-600 bg-red-50 text-red-700")}>
-            DIFFERENCE: {formatNum(diff)}
-          </div>
-        </div>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-// --- FORM COMPONENT ---
-export function ReconciliationForm({ isEditMode = false, defaultValues, reconciliationId }: any) {
+export function ReconciliationForm({
+  isEditMode = false,
+  defaultValues,
+  reconciliationId,
+}: {
+  isEditMode?: boolean;
+  defaultValues?: Partial<ReconciliationFormValues>;
+  reconciliationId?: string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const printRef = useRef<HTMLDivElement | null>(null);
+  
   const firestore = useFirestore();
   const { user } = useUser();
-
   const banksCollectionRef = useMemoFirebase(() => collection(firestore, 'banks'), [firestore]);
-  const { data: banks } = useCollection<{code: string, name: string}>(banksCollectionRef);
+  const { data: banks, isLoading: banksLoading } = useCollection<{code: string, name: string}>(banksCollectionRef);
+  
   const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'report'), [firestore]);
   const { data: settingsData } = useDoc<{ reportHeading: string }>(settingsRef);
 
+
+  const bankOptions = useMemo(() => {
+    if (!banks) return [];
+    return banks.map(bank => ({ value: bank.code, label: `${bank.name}`}));
+  }, [banks]);
+
   const form = useForm<ReconciliationFormValues>({
     resolver: zodResolver(reconciliationSchema),
-    defaultValues: defaultValues || {
-      bankCode: "", bankName: "", reconciliationDate: new Date().toISOString().split("T")[0],
-      balanceAsPerBank: 0, additions: [], deductions: [],
-      balanceAsPerBook: 0, bookAdditions: [], bookDeductions: []
-    }
+    defaultValues: {
+      bankCode: "",
+      bankName: "",
+      reconciliationDate: new Date().toISOString().split("T")[0],
+      balanceAsPerBank: 0,
+      additions: [],
+      deductions: [],
+      balanceAsPerBook: 0,
+      bookAdditions: [],
+      bookDeductions: [],
+    },
   });
 
-  const handleDownloadPdf = async () => {
-    if (!printRef.current) return;
-    document.body.classList.add('print-styles-active');
-    const canvas = await html2canvas(printRef.current, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
-    document.body.classList.remove('print-styles-active');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
-    pdf.save(`Reconciliation-${form.getValues('bankCode')}.pdf`);
-  };
+  useEffect(() => {
+    if (isEditMode && defaultValues) {
+        const valuesToReset = {
+            ...defaultValues,
+            reconciliationDate: defaultValues.reconciliationDate ? new Date(defaultValues.reconciliationDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            additions: defaultValues.additions || [],
+            deductions: defaultValues.deductions || [],
+            bookAdditions: defaultValues.bookAdditions || [],
+            bookDeductions: defaultValues.bookDeductions || [],
+        };
+        form.reset(valuesToReset);
+    }
+  }, [isEditMode, defaultValues, form]);
+
+  const { setValue, control } = form;
+
+  const bankCode = useWatch({ control, name: 'bankCode'});
+
+  useEffect(() => {
+    const selectedBank = banks?.find(b => b.code === bankCode);
+    if (selectedBank) {
+      setValue("bankName", selectedBank.name);
+    }
+  }, [bankCode, setValue, banks]);
 
   const onSubmit = (data: ReconciliationFormValues) => {
-    if (!user) return;
-    const path = `users/${user.uid}/reconciliations`;
-    const payload = { ...data, userId: user.uid, updatedAt: serverTimestamp() };
-    if (isEditMode && reconciliationId) {
-      updateDocumentNonBlocking(doc(firestore, path, reconciliationId), payload);
-    } else {
-      addDocumentNonBlocking(collection(firestore, path), { ...payload, createdAt: serverTimestamp() });
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "You must be logged in to save a reconciliation.",
+        });
+        return;
     }
-    toast({ title: "Statement Saved" });
+    
+    const totalBankAdditions = (data.additions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalBankDeductions = (data.deductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const correctedBankBalance = (Number(data.balanceAsPerBank) || 0) + totalBankAdditions - totalBankDeductions;
+  
+    const totalBookAdditions = (data.bookAdditions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalBookDeductions = (data.bookDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const correctedBookBalance = (Number(data.balanceAsPerBook) || 0) + totalBookAdditions - totalBookDeductions;
+  
+    const difference = correctedBankBalance - correctedBookBalance;
+
+    const payload = {
+        ...data,
+        userId: user.uid,
+        reconciliationMonth: new Date(data.reconciliationDate).toLocaleString('default', { month: 'long', year: 'numeric' }),
+        totalAdditions: totalBankAdditions,
+        totalDeductions: totalBankDeductions,
+        correctedBalance: correctedBankBalance,
+        totalBookAdditions,
+        totalBookDeductions,
+        correctedBookBalance,
+        difference,
+        updatedAt: serverTimestamp(),
+    };
+
+    if (isEditMode && reconciliationId) {
+        const reconciliationRef = doc(firestore, `users/${user.uid}/reconciliations`, reconciliationId);
+        updateDocumentNonBlocking(reconciliationRef, payload);
+    } else {
+        const reconciliationsRef = collection(firestore, `users/${user.uid}/reconciliations`);
+        addDocumentNonBlocking(reconciliationsRef, {...payload, createdAt: serverTimestamp()});
+    }
+
+    toast({
+      title: `Statement ${isEditMode ? "Updated" : "Saved"}`,
+      description: "Your reconciliation has been successfully processed.",
+    });
     router.push("/reconciliations");
 >>>>>>> 4fcfa8d (message)
   };
 
+  const handleDownloadPdf = async () => {
+    const element = printRef.current;
+    if (!element) return;
+  
+    // Temporarily apply print styles for PDF generation
+    document.body.classList.add('print-styles-active');
+    
+    const canvas = await html2canvas(element, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true,
+      logging: true,
+    });
+  
+    // Remove print styles
+    document.body.classList.remove('print-styles-active');
+    
+    const imgData = canvas.toDataURL('image/png');
+    
+    // Inches to points conversion (1 inch = 72 points)
+    const topMargin = 0.25 * 72;
+    const bottomMargin = 0.25 * 72;
+    const leftMargin = 1.25 * 72;
+    const rightMargin = 0.5 * 72;
+  
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    });
+  
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+    // Calculate the available width and height for the image on the PDF
+    const contentWidth = pdfWidth - leftMargin - rightMargin;
+    const contentHeight = pdfHeight - topMargin - bottomMargin;
+    
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // Calculate the aspect ratio of the canvas
+    const ratio = canvasWidth / canvasHeight;
+    
+    // Calculate the height of the image on the PDF to maintain aspect ratio
+    let imgHeight = contentWidth / ratio;
+    let imgWidth = contentWidth;
+
+    // If the calculated height is greater than the available content height,
+    // recalculate width based on content height to fit the page.
+    if (imgHeight > contentHeight) {
+      imgHeight = contentHeight;
+      imgWidth = imgHeight * ratio;
+    }
+  
+    pdf.addImage(imgData, 'PNG', leftMargin, topMargin, imgWidth, imgHeight);
+    pdf.save(`reconciliation-${reconciliationId || 'new'}.pdf`);
+  };
+
   return (
     <Form {...form}>
+<<<<<<< HEAD
 <<<<<<< HEAD
       <form onSubmit={handleSubmit((d) => console.log(d))} className="max-w-5xl mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -535,51 +792,162 @@ export function ReconciliationForm({ isEditMode = false, defaultValues, reconcil
                     <Command><CommandInput placeholder="Search bank..."/><CommandList><CommandEmpty>No bank found.</CommandEmpty><CommandGroup>
                           {banks?.map(b => (
                             <CommandItem key={b.code} onSelect={() => { form.setValue("bankCode", b.code); form.setValue("bankName", b.name); setPopoverOpen(false); }}>{b.name} ({b.code})</CommandItem>
+=======
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card className="no-print">
+          <CardContent className="p-6 grid md:grid-cols-3 gap-6">
+          <FormField
+              control={form.control}
+              name="bankCode"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Bank</FormLabel>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? bankOptions.find(
+                                (option) => option.value === field.value
+                              )?.label ?? 'Select bank...'
+                            : "Select or type bank code"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search bank..." />
+                        <CommandList>
+                        {banksLoading && <CommandEmpty>Loading banks...</CommandEmpty>}
+                        {!banksLoading && <CommandEmpty>No bank found.</CommandEmpty>}
+                        <CommandGroup>
+                          {bankOptions.map((option) => (
+                            <CommandItem
+                              value={option.label}
+                              key={option.value}
+                              onSelect={(currentValue) => {
+                                const selectedBank = banks?.find(b => b.name.toLowerCase() === currentValue.toLowerCase());
+                                form.setValue("bankCode", selectedBank?.code || "");
+                                setPopoverOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  option.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {option.label}
+                            </CommandItem>
+>>>>>>> 89d01bd (message)
                           ))}
-                    </CommandGroup></CommandList></Command>
-                  </PopoverContent>
-                </Popover>
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="bankName" render={({ field }) => (
-              <FormItem className="md:col-span-2 text-left"><FormLabel className="text-xs font-bold uppercase text-slate-500">Bank Name</FormLabel><Input readOnly {...field} className="bg-white"/></FormItem>
-            )} />
-            <FormField control={form.control} name="reconciliationDate" render={({ field }) => (
-              <FormItem className="text-left"><FormLabel className="text-xs font-bold uppercase text-slate-500">Date</FormLabel><Input type="date" {...field} className="bg-white"/></FormItem>
-            )} />
+                        </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bankName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bank Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Auto-populated" readOnly {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="reconciliationDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reconciliation Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
-        <div className="no-print grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DynamicItemList control={form.control} name="additions" title="Bank: Additions" label="Outstanding Checks" />
-          <DynamicItemList control={form.control} name="deductions" title="Bank: Deductions" label="Deposits in Transit" />
-          <DynamicItemList control={form.control} name="bookAdditions" title="Ledger: Additions" label="Direct Credits" />
-          <DynamicItemList control={form.control} name="bookDeductions" title="Ledger: Deductions" label="Bank Charges" />
+        {/* --- DYNAMIC ITEMS --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 no-print">
+            <Card>
+                <CardContent className="p-6 space-y-6">
+                    <DynamicItemList
+                        control={control}
+                        name="additions"
+                        title="Bank Balance Additions"
+                        label="Add: Debit on Ledger Records Without corresponding Credit Bank records"
+                    />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardContent className="p-6 space-y-6">
+                     <DynamicItemList
+                        control={control}
+                        name="deductions"
+                        title="Bank Balance Deductions"
+                        label="Less: Credit on Ledger Records Without corresponding Debit Bank records"
+                    />
+                </CardContent>
+            </Card>
+             <Card>
+                <CardContent className="p-6 space-y-6">
+                    <DynamicItemList
+                        control={control}
+                        name="bookAdditions"
+                        title="Book Balance Additions"
+                        label="Add: Credit on Bank Records Without corresponding Debit Ledger records"
+                    />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardContent className="p-6 space-y-6">
+                     <DynamicItemList
+                        control={control}
+                        name="bookDeductions"
+                        title="Book Balance Deductions"
+                        label="Less: Debit on Bank Records Without corresponding Credit Ledger records"
+                    />
+                </CardContent>
+            </Card>
         </div>
 
-        <div ref={printRef} className="rounded-xl border shadow-xl bg-white overflow-hidden max-w-[210mm] mx-auto">
-          <div className="no-print bg-slate-900 text-white p-4 flex justify-between items-center text-[10px] font-bold uppercase">
-            <span>Official Statement Preview</span>
-            <div className="flex gap-6">
-              <div className="flex flex-col text-right">
-                <span className="text-slate-400">Bank End Balance</span>
-                <Controller control={form.control} name="balanceAsPerBank" render={({ field }) => <input type="number" step="0.01" {...field} className="bg-transparent text-right font-mono text-sm border-none p-0 focus:ring-0 w-28" />} />
-              </div>
-              <div className="flex flex-col text-right border-l border-slate-700 pl-6">
-                <span className="text-slate-400">Ledger End Balance</span>
-                <Controller control={form.control} name="balanceAsPerBook" render={({ field }) => <input type="number" step="0.01" {...field} className="bg-transparent text-right font-mono text-sm border-none p-0 focus:ring-0 w-28" />} />
-              </div>
-            </div>
-          </div>
-          <SummaryCalculation control={form.control} reportHeading={settingsData?.reportHeading} />
+        <div ref={printRef}>
+            <SummaryCalculation control={control} reportHeading={settingsData?.reportHeading} isEditMode={isEditMode} />
         </div>
 
-        <div className="no-print fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-center gap-6 shadow-2xl z-50">
-          <Button type="button" variant="outline" onClick={handleDownloadPdf} className="h-12 px-8 font-bold uppercase text-xs tracking-widest"><FileDown className="mr-2 h-4 w-4" /> Download PDF</Button>
-          <Button type="submit" className="h-12 px-12 font-bold uppercase text-xs tracking-widest"><Save className="mr-2 h-4 w-4" /> Save Statement</Button>
+
+        <div className="flex justify-end no-print gap-4">
+          <Button type="button" variant="outline" onClick={handleDownloadPdf}>Download as PDF</Button>
+          <Button type="submit">{isEditMode ? "Save Changes" : "Save Reconciliation"}</Button>
         </div>
       </form>
     </Form>
   );
 }
+<<<<<<< HEAD
 >>>>>>> 4fcfa8d (message)
+=======
+
+    
+>>>>>>> 89d01bd (message)
