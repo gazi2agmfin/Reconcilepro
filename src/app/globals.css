@@ -152,7 +152,24 @@ body {
     border: none !important;
     background-color: transparent !important;
   }
+  @media print, .print-styles-active {
+  .no-print { display: none !important; }
+  .print-section {
+    width: 210mm; /* A4 Width */
+    background: white !important;
+    color: black !important;
+  }
+  .narration-text {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    display: block;
+    line-height: 1.2;
+    padding-right: 10px;
+  }
 }
+}
+
 @layer utilities {
     .print-only {
         display: none;
