@@ -1,10 +1,13 @@
 "use client";
 
-import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, Controller, useWatch, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4469e0c (message)
 import { PlusCircle, Trash2, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -12,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+<<<<<<< HEAD
 import {
   Form,
   FormField,
@@ -56,14 +60,17 @@ function DynamicItemList({
 =======
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 =======
+=======
+>>>>>>> 4469e0c (message)
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
+  FormControl,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+<<<<<<< HEAD
 >>>>>>> 89d01bd (message)
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -81,30 +88,30 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+=======
+>>>>>>> 4469e0c (message)
 
+/* ----------------------------- SCHEMA ----------------------------- */
 
 const itemSchema = z.object({
-  narration: z.string().min(1, "Narration is required."),
-  amount: z.coerce.number().min(0, "Amount must be positive."),
+  narration: z.string().min(1, "Required"),
+  amount: z.coerce.number().min(0, "Must be positive"),
 });
 
-const reconciliationSchema = z.object({
-  bankCode: z.string().min(1, "Bank code is required."),
-  bankName: z.string(),
-  reconciliationDate: z.string().min(1, "Date is required."),
+const schema = z.object({
   balanceAsPerBank: z.coerce.number(),
-  // Bank Side
+  balanceAsPerBook: z.coerce.number(),
   additions: z.array(itemSchema),
   deductions: z.array(itemSchema),
-  // Book Side
   bookAdditions: z.array(itemSchema),
   bookDeductions: z.array(itemSchema),
-  balanceAsPerBook: z.coerce.number(),
 });
 
+type FormValues = z.infer<typeof schema>;
 
-type ReconciliationFormValues = z.infer<typeof reconciliationSchema>;
+/* ------------------------ DYNAMIC LIST COMPONENT ----------------------------- */
 
+<<<<<<< HEAD
 const DynamicItemList = ({
   control,
   name,
@@ -129,11 +136,28 @@ const DynamicItemList = ({
   return (
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+function DynamicItemList({ 
+  control, 
+  name, 
+  title, 
+  label 
+}: { 
+  control: Control<FormValues>; 
+  name: "additions" | "deductions" | "bookAdditions" | "bookDeductions"; 
+  title: string; 
+  label: string; 
+}) {
+  const { fields, append, remove } = useFieldArray({ control, name });
+
+  return (
+>>>>>>> 4469e0c (message)
     <Card className="shadow-sm border-slate-200">
       <CardContent className="p-5 space-y-4">
         <div>
           <h3 className="font-bold text-slate-800">{title}</h3>
           <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
+<<<<<<< HEAD
         </div>
 
         {fields.map((field, index) => (
@@ -446,272 +470,156 @@ const SummaryCalculation = ({ control, reportHeading, isEditMode }: { control: a
                 <h4 className="font-bold">Corrected Bank Balance end of the period</h4>
                 <span className="w-40 text-right font-bold">{correctedBankBalance.toFixed(2)}</span>
             </div>
+=======
+>>>>>>> 4469e0c (message)
         </div>
 
-        {/* --- Book Section --- */}
-        <div className="space-y-2 pt-4">
-             <div className="flex justify-between items-center border-b-2 border-black pb-1">
-                <h4 className="font-bold"> Book Balance end of the period</h4>
-                 <FormField
-                    control={control}
-                    name="balanceAsPerBook"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormControl>
-                        <Input type="number" step="0.00" className="w-40 text-right font-bold" {...field} />
-                        </FormControl>
-                    </FormItem>
-                    )}
-                />
+        {fields.map((field, index) => (
+          <div key={field.id} className="flex gap-2 items-start">
+            <span className="w-5 pt-2 text-xs font-bold text-slate-400">{index + 1}.</span>
+            
+            <div className="flex-1">
+              <Controller
+                control={control}
+                name={`${name}.${index}.narration`}
+                render={({ field }) => (
+                  <Textarea {...field} placeholder="Description" className="min-h-[38px] text-sm" />
+                )}
+              />
             </div>
-            <div className="grid grid-cols-[auto,1fr,160px] items-center">
-                <div className="font-bold pr-2">Add:</div>
-                <div className="col-span-2">Credit on Bank Records Without corresponding Debit Ledger records:</div>
+
+            <div className="w-28">
+              <Controller
+                control={control}
+                name={`${name}.${index}.amount`}
+                render={({ field }) => (
+                  <Input 
+                    {...field} 
+                    type="number" 
+                    placeholder="0.00" 
+                    className="text-right text-sm" 
+                    onWheel={(e) => e.currentTarget.blur()}
+                  />
+                )}
+              />
             </div>
-             { (formValues.bookAdditions || []).map((item:any, index:number) => (
-                <div key={`book_add_${index}`} className="grid grid-cols-[auto,1fr,160px] items-center pl-8">
-                    <div/>
-                    <div>{item.narration}</div>
-                    <div className="text-right pr-1">{Number(item.amount).toFixed(2)}</div>
-                </div>
-             ))}
-             <div className="grid grid-cols-[auto,1fr,160px] items-center">
-                <div/>
-                <div className="text-right font-bold pr-2">Total amount A:</div>
-                <div className="text-right border-t border-black font-bold">{totalBookAdditions.toFixed(2)}</div>
-             </div>
 
-            <div className="grid grid-cols-[auto,1fr,160px] items-center pt-2">
-                <div className="font-bold pr-2">Less:</div>
-                <div className="col-span-2">Debit on Bank Records Without corresponding Credit Ledger records:</div>
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-emerald-600"
+                onClick={() => append({ narration: "", amount: 0 })}
+              >
+                <PlusCircle className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-rose-500"
+                onClick={() => remove(index)}
+                disabled={fields.length === 1}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-             { (formValues.bookDeductions || []).map((item:any, index:number) => (
-                <div key={`book_deduct_${index}`} className="grid grid-cols-[auto,1fr,160px] items-center pl-8">
-                    <div/>
-                    <div>{item.narration}</div>
-                    <div className="text-right pr-1">{Number(item.amount).toFixed(2)}</div>
-                </div>
-             ))}
-             <div className="grid grid-cols-[auto,1fr,160px] items-center">
-                <div/>
-                <div className="text-right font-bold pr-2">Total amount B:</div>
-                <div className="text-right border-t border-black font-bold">({totalBookDeductions.toFixed(2)})</div>
-             </div>
-
-             <div className="flex justify-between items-center border-t-2 border-black pt-2 mt-2">
-                <h4 className="font-bold">Corrected Book Balance end of the period</h4>
-                <span className="w-40 text-right font-bold">{correctedBookBalance.toFixed(2)}</span>
-            </div>
-        </div>
-
-        <div className="flex justify-end items-center pt-4">
-            <h4 className="font-bold text-red-600">Difference</h4>
-            <div className="w-40 text-right font-bold border-2 border-black ml-4 p-1">{difference.toFixed(2)}</div>
-        </div>
-
-        {/* Footer */}
-        <div className="hidden print:block pt-24">
-            <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <p className="border-t border-black pt-2">Prepared by</p>
-                    <p className="mt-2">Assistant Accountant</p>
-                </div>
-                 <div>
-                    <p className="border-t border-black pt-2">Verified by</p>
-                     <p className="mt-2">Accountant</p>
-                </div>
-                 <div>
-                    <p className="border-t border-black pt-2">Approved by</p>
-                     <p className="mt-2">AGM(Finance)</p>
-                </div>
-            </div>
-        </div>
-
+          </div>
+        ))}
       </CardContent>
     </Card>
-  )
+  );
 }
 
-export function ReconciliationForm({
-  isEditMode = false,
-  defaultValues,
-  reconciliationId,
-}: {
-  isEditMode?: boolean;
-  defaultValues?: Partial<ReconciliationFormValues>;
-  reconciliationId?: string;
-}) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const printRef = useRef<HTMLDivElement | null>(null);
-  
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const banksCollectionRef = useMemoFirebase(() => collection(firestore, 'banks'), [firestore]);
-  const { data: banks, isLoading: banksLoading } = useCollection<{code: string, name: string}>(banksCollectionRef);
-  
-  const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'report'), [firestore]);
-  const { data: settingsData } = useDoc<{ reportHeading: string }>(settingsRef);
+/* ----------------------------- MAIN PAGE ---------------------------- */
 
-
-  const bankOptions = useMemo(() => {
-    if (!banks) return [];
-    return banks.map(bank => ({ value: bank.code, label: `${bank.name}`}));
-  }, [banks]);
-
-  const form = useForm<ReconciliationFormValues>({
-    resolver: zodResolver(reconciliationSchema),
+export default function ReconciliationForm() {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
-      bankCode: "",
-      bankName: "",
-      reconciliationDate: new Date().toISOString().split("T")[0],
       balanceAsPerBank: 0,
-      additions: [],
-      deductions: [],
       balanceAsPerBook: 0,
-      bookAdditions: [],
-      bookDeductions: [],
+      additions: [{ narration: "", amount: 0 }],
+      deductions: [{ narration: "", amount: 0 }],
+      bookAdditions: [{ narration: "", amount: 0 }],
+      bookDeductions: [{ narration: "", amount: 0 }],
     },
   });
 
-  useEffect(() => {
-    if (isEditMode && defaultValues) {
-        const valuesToReset = {
-            ...defaultValues,
-            reconciliationDate: defaultValues.reconciliationDate ? new Date(defaultValues.reconciliationDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-            additions: defaultValues.additions || [],
-            deductions: defaultValues.deductions || [],
-            bookAdditions: defaultValues.bookAdditions || [],
-            bookDeductions: defaultValues.bookDeductions || [],
-        };
-        form.reset(valuesToReset);
-    }
-  }, [isEditMode, defaultValues, form]);
+  const { control, handleSubmit } = form;
+  const values = useWatch({ control });
 
-  const { setValue, control } = form;
+  // Error-safe sum helper
+  const sum = (arr: any[] = []) => 
+    arr.reduce((t, i) => t + (Number(i?.amount) || 0), 0);
 
-  const bankCode = useWatch({ control, name: 'bankCode'});
+  const correctedBank = (Number(values.balanceAsPerBank) || 0) + sum(values.additions) - sum(values.deductions);
+  const correctedBook = (Number(values.balanceAsPerBook) || 0) + sum(values.bookAdditions) - sum(values.bookDeductions);
+  const diff = correctedBank - correctedBook;
 
-  useEffect(() => {
-    const selectedBank = banks?.find(b => b.code === bankCode);
-    if (selectedBank) {
-      setValue("bankName", selectedBank.name);
-    }
-  }, [bankCode, setValue, banks]);
-
-  const onSubmit = (data: ReconciliationFormValues) => {
-    if (!user) {
-        toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "You must be logged in to save a reconciliation.",
-        });
-        return;
-    }
-    
-    const totalBankAdditions = (data.additions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const totalBankDeductions = (data.deductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const correctedBankBalance = (Number(data.balanceAsPerBank) || 0) + totalBankAdditions - totalBankDeductions;
-  
-    const totalBookAdditions = (data.bookAdditions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const totalBookDeductions = (data.bookDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const correctedBookBalance = (Number(data.balanceAsPerBook) || 0) + totalBookAdditions - totalBookDeductions;
-  
-    const difference = correctedBankBalance - correctedBookBalance;
-
-    const payload = {
-        ...data,
-        userId: user.uid,
-        reconciliationMonth: new Date(data.reconciliationDate).toLocaleString('default', { month: 'long', year: 'numeric' }),
-        totalAdditions: totalBankAdditions,
-        totalDeductions: totalBankDeductions,
-        correctedBalance: correctedBankBalance,
-        totalBookAdditions,
-        totalBookDeductions,
-        correctedBookBalance,
-        difference,
-        updatedAt: serverTimestamp(),
-    };
-
-    if (isEditMode && reconciliationId) {
-        const reconciliationRef = doc(firestore, `users/${user.uid}/reconciliations`, reconciliationId);
-        updateDocumentNonBlocking(reconciliationRef, payload);
-    } else {
-        const reconciliationsRef = collection(firestore, `users/${user.uid}/reconciliations`);
-        addDocumentNonBlocking(reconciliationsRef, {...payload, createdAt: serverTimestamp()});
-    }
-
-    toast({
-      title: `Statement ${isEditMode ? "Updated" : "Saved"}`,
-      description: "Your reconciliation has been successfully processed.",
+  /* EXCEL EXPORT LOGIC (Safe from .toFixed errors) */
+  const downloadExcel = () => {
+    const formatRow = (item: any) => ({
+      Description: item.narration || "N/A",
+      // CRITICAL FIX: Ensure it is a Number before calling toFixed
+      Amount: Number(item.amount || 0).toFixed(2)
     });
+<<<<<<< HEAD
     router.push("/reconciliations");
 >>>>>>> 4fcfa8d (message)
   };
+=======
+>>>>>>> 4469e0c (message)
 
-  const handleDownloadPdf = async () => {
-    const element = printRef.current;
-    if (!element) return;
-  
-    // Temporarily apply print styles for PDF generation
-    document.body.classList.add('print-styles-active');
-    
-    const canvas = await html2canvas(element, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true,
-      logging: true,
-    });
-  
-    // Remove print styles
-    document.body.classList.remove('print-styles-active');
-    
-    const imgData = canvas.toDataURL('image/png');
-    
-    // Inches to points conversion (1 inch = 72 points)
-    const topMargin = 0.25 * 72;
-    const bottomMargin = 0.25 * 72;
-    const leftMargin = 1.25 * 72;
-    const rightMargin = 0.5 * 72;
-  
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: 'a4'
-    });
-  
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    
-    // Calculate the available width and height for the image on the PDF
-    const contentWidth = pdfWidth - leftMargin - rightMargin;
-    const contentHeight = pdfHeight - topMargin - bottomMargin;
-    
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    
-    // Calculate the aspect ratio of the canvas
-    const ratio = canvasWidth / canvasHeight;
-    
-    // Calculate the height of the image on the PDF to maintain aspect ratio
-    let imgHeight = contentWidth / ratio;
-    let imgWidth = contentWidth;
+    const workbook = XLSX.utils.book_new();
 
-    // If the calculated height is greater than the available content height,
-    // recalculate width based on content height to fit the page.
-    if (imgHeight > contentHeight) {
-      imgHeight = contentHeight;
-      imgWidth = imgHeight * ratio;
-    }
-  
-    pdf.addImage(imgData, 'PNG', leftMargin, topMargin, imgWidth, imgHeight);
-    pdf.save(`reconciliation-${reconciliationId || 'new'}.pdf`);
+    // Create a flat array for the main reconciliation sheet
+    const summaryData = [
+      ["Bank Reconciliation Statement"],
+      ["Generated on", new Date().toLocaleDateString()],
+      [],
+      ["BANK SIDE"],
+      ["Balance as per Bank Statement", Number(values.balanceAsPerBank || 0).toFixed(2)],
+      ["Add: Additions", sum(values.additions).toFixed(2)],
+      ["Less: Deductions", `(${sum(values.deductions).toFixed(2)})`],
+      ["Adjusted Bank Balance", correctedBank.toFixed(2)],
+      [],
+      ["BOOK SIDE"],
+      ["Balance as per General Ledger", Number(values.balanceAsPerBook || 0).toFixed(2)],
+      ["Add: Book Additions", sum(values.bookAdditions).toFixed(2)],
+      ["Less: Book Deductions", `(${sum(values.bookDeductions).toFixed(2)})`],
+      ["Adjusted Book Balance", correctedBook.toFixed(2)],
+      [],
+      ["Net Difference", diff.toFixed(2)]
+    ];
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, wsSummary, "Summary");
+
+    // Breakdown Sheets
+    const details = [
+      { name: "Bank Additions", data: values.additions },
+      { name: "Bank Deductions", data: values.deductions },
+      { name: "Book Additions", data: values.bookAdditions },
+      { name: "Book Deductions", data: values.bookDeductions }
+    ];
+
+    details.forEach(section => {
+      const ws = XLSX.utils.json_to_sheet(section.data?.map(formatRow) || []);
+      XLSX.utils.book_append_sheet(workbook, ws, section.name);
+    });
+
+    XLSX.writeFile(workbook, `Reconciliation_${new Date().getTime()}.xlsx`);
   };
 
   return (
     <Form {...form}>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4469e0c (message)
       <form onSubmit={handleSubmit((d) => console.log(d))} className="max-w-5xl mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-slate-200">
           <h1 className="text-xl font-bold text-slate-900">Bank Reconciliation</h1>
@@ -724,6 +632,7 @@ export function ReconciliationForm({
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
+<<<<<<< HEAD
           <FormField
             control={control}
             name="balanceAsPerBank"
@@ -885,65 +794,61 @@ export function ReconciliationForm({
                 </FormItem>
               )}
             />
+=======
+          <FormField
+            control={control}
+            name="balanceAsPerBank"
+            render={({ field }) => (
+              <FormItem className="bg-white p-4 border rounded-md shadow-sm">
+                <FormLabel className="font-semibold">Balance as per Bank</FormLabel>
+                <FormControl><Input type="number" {...field} /></FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="balanceAsPerBook"
+            render={({ field }) => (
+              <FormItem className="bg-white p-4 border rounded-md shadow-sm">
+                <FormLabel className="font-semibold">Balance as per Ledger</FormLabel>
+                <FormControl><Input type="number" {...field} /></FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <DynamicItemList control={control} name="additions" title="Bank Additions" label="Deposits in Transit" />
+          <DynamicItemList control={control} name="deductions" title="Bank Deductions" label="Outstanding Checks" />
+          <DynamicItemList control={control} name="bookAdditions" title="Book Additions" label="Direct Credits/Interest" />
+          <DynamicItemList control={control} name="bookDeductions" title="Book Deductions" label="Bank Fees/Charges" />
+        </div>
+
+        <Card className="bg-slate-900 text-white overflow-hidden">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center md:text-right">
+              <div>
+                <p className="text-slate-400 text-xs uppercase">Adj. Bank Balance</p>
+                <p className="text-xl font-mono">{correctedBank.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs uppercase">Adj. Book Balance</p>
+                <p className="text-xl font-mono">{correctedBook.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div className="col-span-2 md:col-span-1 border-t md:border-t-0 md:border-l border-slate-700 pt-4 md:pt-0">
+                <p className="text-slate-400 text-xs uppercase">Difference</p>
+                <p className={`text-2xl font-bold font-mono ${Math.abs(diff) < 0.01 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {diff.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+>>>>>>> 4469e0c (message)
           </CardContent>
         </Card>
-
-        {/* --- DYNAMIC ITEMS --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 no-print">
-            <Card>
-                <CardContent className="p-6 space-y-6">
-                    <DynamicItemList
-                        control={control}
-                        name="additions"
-                        title="Bank Balance Additions"
-                        label="Add: Debit on Ledger Records Without corresponding Credit Bank records"
-                    />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardContent className="p-6 space-y-6">
-                     <DynamicItemList
-                        control={control}
-                        name="deductions"
-                        title="Bank Balance Deductions"
-                        label="Less: Credit on Ledger Records Without corresponding Debit Bank records"
-                    />
-                </CardContent>
-            </Card>
-             <Card>
-                <CardContent className="p-6 space-y-6">
-                    <DynamicItemList
-                        control={control}
-                        name="bookAdditions"
-                        title="Book Balance Additions"
-                        label="Add: Credit on Bank Records Without corresponding Debit Ledger records"
-                    />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardContent className="p-6 space-y-6">
-                     <DynamicItemList
-                        control={control}
-                        name="bookDeductions"
-                        title="Book Balance Deductions"
-                        label="Less: Debit on Bank Records Without corresponding Credit Ledger records"
-                    />
-                </CardContent>
-            </Card>
-        </div>
-
-        <div ref={printRef}>
-            <SummaryCalculation control={control} reportHeading={settingsData?.reportHeading} isEditMode={isEditMode} />
-        </div>
-
-
-        <div className="flex justify-end no-print gap-4">
-          <Button type="button" variant="outline" onClick={handleDownloadPdf}>Download as PDF</Button>
-          <Button type="submit">{isEditMode ? "Save Changes" : "Save Reconciliation"}</Button>
-        </div>
       </form>
     </Form>
   );
+<<<<<<< HEAD
 }
 <<<<<<< HEAD
 >>>>>>> 4fcfa8d (message)
@@ -951,3 +856,6 @@ export function ReconciliationForm({
 
     
 >>>>>>> 89d01bd (message)
+=======
+}
+>>>>>>> 4469e0c (message)
