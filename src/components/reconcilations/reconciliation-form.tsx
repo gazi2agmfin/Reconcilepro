@@ -82,7 +82,7 @@ function DynamicItemList({
                   <Input 
                     {...field} 
                     type="number" 
-                    step="0.01"
+                    step="0.00"
                     placeholder="0.00" 
                     className="text-right text-sm font-mono" 
                     onWheel={(e) => e.currentTarget.blur()}
@@ -239,8 +239,8 @@ export default function ReconciliationForm() {
                 name="balanceAsPerBook"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-slate-700">Balance as per Book (Ledger)</FormLabel>
-                    <FormControl><Input type="number" step="0.01" {...field} className="text-lg font-mono" /></FormControl>
+                    <FormLabel className="font-bold text-slate-700">Balance as per Ledger Book </FormLabel>
+                    <FormControl><Input type="number" step="0.00" {...field} className="text-lg font-mono" /></FormControl>
                   </FormItem>
                 )}
               />
@@ -261,11 +261,11 @@ export default function ReconciliationForm() {
           <CardContent className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
               <div className="space-y-1">
-                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Adjusted Bank Balance</p>
+                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Corrected Bank Balance end of the period</p>
                 <p className="text-2xl font-mono">{correctedBank.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <div className="space-y-1 border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-8">
-                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Adjusted Book Balance</p>
+                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Corrected Book Balance end of the period</p>
                 <p className="text-2xl font-mono">{correctedBook.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <div className="bg-white/5 p-4 rounded-lg flex justify-between items-center">
