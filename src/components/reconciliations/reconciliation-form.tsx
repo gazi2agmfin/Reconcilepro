@@ -686,7 +686,17 @@ export function ReconciliationForm({
     }
   
     pdf.addImage(imgData, 'PNG', leftMargin, topMargin, finalImgWidth, finalImgHeight);
-    pdf.save(`reconciliation-${savedId}.pdf`);
+    
+    // Generate filename with bank name and reconciliation month
+    const bankName = formValues.bankName || 'reconciliation';
+    const reconciliationDate = formValues.reconciliationDate;
+    const dateObj = new Date(reconciliationDate);
+    const utcDate = new Date(dateObj.valueOf() + dateObj.getTimezoneOffset() * 60000);
+    const forMonth = subMonths(utcDate, 1);
+    const monthString = format(forMonth, 'MMMM-yyyy');
+    const filename = `${bankName}_${monthString}.pdf`;
+    
+    pdf.save(filename);
   };
   
   const handleDuplicateDialogClose = () => {
